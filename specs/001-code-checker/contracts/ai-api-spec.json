@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CodeChecker AI分析API",
+    "description": "用于CodeChecker Android应用的AI智能分析服务接口规范",
+    "version": "1.0.0",
+    "contact": {
+      "name": "CodeChecker开发团队",
+      "email": "dev@codechecker.edu.cn"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.deepseek.com/v1",
+      "description": "DeepSeek AI服务"
+    },
+    {
+      "url": "https://dashscope.aliyuncs.com/api/v1",
+      "description": "阿里云通义千问/ModelScope服务"
+    }
+  ],
+  "paths": {
+    "/ai/analyze": {
+      "post": {
+        "summary": "分析两段Python代码的相似性",
+        "description": "基于提交的代码片段，AI分析其相似原因和抄袭风险等级",
+        "operationId": "analyzeCodeSimilarity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["code1", "code2", "similarity", "provider"],
+                "properties": {
+                  "code1": {
+                    "type": "string",
+                    "description": "第一段Python代码",
+                    "maxLength": 10000,
+                    "example": "def fibonacci(n):\\n    if n <= 1:\\n        return n\\n    return fibonacci(n-1) + fibonacci(n-2)"
+                  },
+                  "code2": {
+                    "type": "string",
+                    "description": "第二段Python代码",
+                    "maxLength": 10000,
+                    "example": "def fib(n):\\n    if n <= 1:\\n        return n\\n    return fib(n-1) + fib(n-2)"
+                  },
+                  "similarity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "当前计算的相似度百分比",
+                    "example": 85.5
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": ["DeepSeek", "Qwen", "ModelScope"],
+                    "description": "AI服务提供商",
+                    "example": "DeepSeek"
+                  }
+                }
+              },
+              "examples": {
+                "normalAnalysis": {
+                  "summary": "常规相似性分析",
+                  "value": {
+                    "code1": "def sort(arr):\\n    return sorted(arr)",
+                    "code2": "def sort_array(arr):\\n    return sorted(arr)",
+                    "similarity": 75.0,
+                    "provider": "DeepSeek"
+                  }
+                },
+                "highSimilarity": {
+                  "summary": "高相似度代码分析",
+                  "value": {
+                    "code1": "def calculate(x, y):\\n    return x + y",
+                    "code2": "def calculate(a, b):\\n    return a + b",
+                    "similarity": 90.0,
+                    "provider": "Qwen"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "分析成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["reason", "isCommonCode", "plagiarismRisk", "analysis"],
+                  "properties": {
+                    "reason": {
+                      "type": "string",
+                      "description": "相似性的具体原因",
+                      "example": "两段代码都实现了斐波那契数列计算，使用了相同的递归算法逻辑，变量命名略有不同但结构和核心算法完全一致。"
+                    },
+                    "isCommonCode": {
+                      "type": "boolean",
+                      "description": "是否属于常见公共代码模式",
+                      "example": false
+                    },
+                    "plagiarismRisk": {
+                      "type": "string",
+                      "enum": ["低", "中", "高"],
+                      "description": "抄袭风险等级",
+                      "example": "高"
+                    },
+                    "analysis": {
+                      "type": "string",
+                      "description": "详细分析报告",
+                      "example": "两段代码的核心逻辑几乎相同，都使用了递归方式计算斐波那契数列。虽然变量名从n变为x，但算法结构和逻辑完全一致。这种高相似度表明可能存在代码复制或抄袭行为。建议教师进一步调查作业提交过程和独立思考的证据。"
+                    }
+                  }
+                },
+                "examples": {
+                  "highRisk": {
+                    "summary": "高风险分析结果",
+                    "value": {
+                      "reason": "两段代码都实现了相同的算法逻辑，变量命名不同但结构和核心逻辑完全一致",
+                      "isCommonCode": false,
+                      "plagiarismRisk": "高",
+                      "analysis": "相似度达90%以上，代码结构和逻辑几乎相同，虽然变量名有差异，但明显是经过简单改写的相同代码。建议教师要求学生提供更多独立开发的证据。"
+                    }
+                  },
+                  "mediumRisk": {
+                    "summary": "中等风险分析结果",
+                    "value": {
+                      "reason": "两段代码都使用了排序算法，但具体实现略有不同",
+                      "isCommonCode": false,
+                      "plagiarismRisk": "中",
+                      "analysis": "相似度为65%，都实现了快速排序算法，但实现细节有差异。这可能是学生独立思考的结果，但也可能存在参考他人代码的情况。建议结合作业提交时间和过程进行进一步判断。"
+                    }
+                  },
+                  "commonCode": {
+                    "summary": "公共代码分析结果",
+                    "value": {
+                      "reason": "两段代码都是Hello World的标准实现",
+                      "isCommonCode": true,
+                      "plagiarismRisk": "低",
+                      "analysis": "这是Python最基础的示例代码，几乎所有初学者都会写出相似的代码。这种相似性不代表抄袭，属于正常的公共代码模式。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "INVALID_PARAMETER"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "code1参数不能为空"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "请求频率超限",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "RATE_LIMIT_EXCEEDED"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "请求频率超限，请稍后再试"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "INTERNAL_ERROR"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "服务器内部错误，请稍后重试"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "API密钥，格式：Bearer {api_key}"
+      }
+    },
+    "schemas": {
+      "AIAnalysisRequest": {
+        "type": "object",
+        "required": ["code1", "code2", "similarity", "provider"],
+        "properties": {
+          "code1": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "code2": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "similarity": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["DeepSeek", "Qwen", "ModelScope"]
+          }
+        }
+      },
+      "AIAnalysisResponse": {
+        "type": "object",
+        "required": ["reason", "isCommonCode", "plagiarismRisk", "analysis"],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500
+          },
+          "isCommonCode": {
+            "type": "boolean"
+          },
+          "plagiarismRisk": {
+            "type": "string",
+            "enum": ["低", "中", "高"]
+          },
+          "analysis": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 1000
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": ["code", "message"]
+          }
+        },
+        "required": ["error"]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "AI分析",
+      "description": "AI智能分析相关接口"
+    }
+  ]
+}

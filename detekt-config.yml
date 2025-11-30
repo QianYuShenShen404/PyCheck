@@ -1,0 +1,99 @@
+config:
+  validation: true
+  excludes: ''
+
+build:
+  maxIssues: 10
+  weights:
+    complexity: 2
+    style: 1
+    comments: 1
+
+processors:
+  active: true
+
+console-reports:
+  active: true
+  excludes:
+    - 'ProjectStatisticsReport'
+    - 'ComplexityReport'
+    - 'NotificationReport'
+    - 'FindingsReport'
+    - 'FileBasedFindingsReport'
+
+output-reports:
+  active: true
+  excludes:
+    - 'HtmlOutputReport'
+    - 'XmlOutputReport'
+
+style:
+  active: true
+  NewLineAtEndOfFile:
+    active: false
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  ImportOrdering:
+    active: false
+  MagicNumber:
+    active: true
+    excludes: ['**/test/**', '**/*.test.kt', '**/*.Spec.kt']
+  VariableNaming:
+    active: true
+  ForbiddenComment:
+    active: true
+    values: ['TODO:', 'FIXME:', 'HACK:', 'BUG:']
+
+complexity:
+  active: true
+  ComplexCondition:
+    active: true
+    threshold: 5
+  ComplexMethod:
+    active: true
+    threshold: 20
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 20
+    thresholdInClasses: 15
+    thresholdInInterfaces: 10
+
+performance:
+  active: true
+  ForEachOnRange:
+    active: true
+  SpreadOperator:
+    active: true
+
+potential-bugs:
+  active: true
+  DuplicateCaseInWhenExpression:
+    active: true
+  MissingWhenElse:
+    active: true
+
+empty-blocks:
+  active: true
+  EmptyFunctionBlock:
+    active: true
+    excludes: ['**/test/**', '**/*.test.kt']
+
+naming:
+  active: true
+  ClassNaming:
+    active: true
+    excludes: ['**/test/**']
+  FunctionNaming:
+    active: true
+    excludes: ['**/test/**']
+  TopLevelPropertyNaming:
+    active: true
+    excludes: ['**/test/**']
+
+comments:
+  active: true
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false

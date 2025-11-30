@@ -1,0 +1,18 @@
+#!/bin/bash
+echo "Running pre-commit checks..."
+
+# Run ktlint if available
+if command -v ktlint &> /dev/null; then
+    echo "Running ktlint..."
+    ktlint --reporter check
+else
+    echo "ktlint not installed, skipping..."
+fi
+
+# Run detekt if configured
+if [ -f "detekt-config.yml" ]; then
+    echo "Running detekt..."
+    ./gradlew detekt || true
+fi
+
+echo "Pre-commit checks complete"
