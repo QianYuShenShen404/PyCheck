@@ -68,4 +68,11 @@ interface ReportRepository {
      * Get high similarities by report
      */
     fun getHighSimilaritiesFlow(reportId: Long, threshold: Float = 60f): Flow<List<Similarity>>
+
+    /**
+     * Get similarity by ID
+     */
+    suspend fun getSimilarityById(similarityId: Long): Similarity?
+
+    suspend fun updateSimilarity(similarity: Similarity)
 }

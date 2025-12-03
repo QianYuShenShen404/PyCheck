@@ -26,7 +26,12 @@ data class ReportDetailUiState(
     val latestStudentCount: Int = 0,
     val totalSubmissionCount: Int = 0,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val similarityThreshold: Int = 60,
+    val aiLoading: Boolean = false,
+    val aiError: String? = null,
+    val aiResult: com.example.codechecker.domain.model.AIAnalysisResult? = null,
+    val selectedSimilarityId: Long? = null
 )
 
 /**
@@ -36,7 +41,10 @@ data class ReportDetailUiState(
 class ReportDetailViewModel @Inject constructor(
     private val plagiarismUseCase: PlagiarismUseCase,
     private val submissionRepository: SubmissionRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val getAdminSettingsUseCase: com.example.codechecker.domain.usecase.GetAdminSettingsUseCase,
+    private val aiRepository: com.example.codechecker.domain.repository.AIRepository,
+    private val reportRepository: com.example.codechecker.domain.repository.ReportRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportDetailUiState())
@@ -49,7 +57,8 @@ class ReportDetailViewModel @Inject constructor(
             try {
                 val report = plagiarismUseCase.getReportById(reportId)
                 val similarities = plagiarismUseCase.getSimilaritiesByReport(reportId)
-                val highSimilarities = plagiarismUseCase.getHighSimilarityPairs(reportId, threshold = 60f)
+                val settings = getAdminSettingsUseCase()
+                val highSimilarities = plagiarismUseCase.getHighSimilarityPairs(reportId, threshold = settings.similarityThreshold.toFloat())
 
                 val submissionIds = similarities.flatMap { listOf(it.submission1Id, it.submission2Id) }.distinct()
                 val submissionsMap = mutableMapOf<Long, Submission>()
@@ -74,7 +83,8 @@ class ReportDetailViewModel @Inject constructor(
                     highSimilarities = highSimilarities,
                     submissionsById = submissionsMap,
                     latestStudentCount = latestCount,
-                    totalSubmissionCount = totalCount
+                    totalSubmissionCount = totalCount,
+                    similarityThreshold = settings.similarityThreshold
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -87,5 +97,38 @@ class ReportDetailViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun analyzeSimilarity(similarityId: Long) {
+        val similarity = _uiState.value.similarities.find { it.id == similarityId } ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(aiLoading = true, aiError = null, aiResult = null, selectedSimilarityId = similarityId)
+            try {
+                val sub1 = submissionRepository.getSubmissionById(similarity.submission1Id)
+                val sub2 = submissionRepository.getSubmissionById(similarity.submission2Id)
+                val res = aiRepository.analyze(sub1?.codeContent ?: "", sub2?.codeContent ?: "", similarity.similarityScore.toDouble())
+                _uiState.value = _uiState.value.copy(aiLoading = false, aiResult = res)
+                if (res is com.example.codechecker.domain.model.AIAnalysisResult.Success) {
+                    val mapped = com.example.codechecker.domain.model.AIAnalysis(
+                        similarityReason = res.reason,
+                        riskLevel = when (res.plagiarismRisk.lowercase()) {
+                            "high" -> com.example.codechecker.domain.model.RiskLevel.HIGH
+                            "medium" -> com.example.codechecker.domain.model.RiskLevel.MEDIUM
+                            else -> com.example.codechecker.domain.model.RiskLevel.LOW
+                        },
+                        explanation = res.analysis
+                    )
+                    reportRepository.updateSimilarity(similarity.copy(aiAnalysis = mapped))
+                }
+            } catch (e: java.net.SocketTimeoutException) {
+                _uiState.value = _uiState.value.copy(aiLoading = false, aiError = "timeout")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(aiLoading = false, aiError = e.message ?: "分析失败")
+            }
+        }
+    }
+
+    fun clearAiError() {
+        _uiState.value = _uiState.value.copy(aiError = null, selectedSimilarityId = null, aiResult = null)
     }
 }

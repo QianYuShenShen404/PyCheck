@@ -85,7 +85,7 @@ class PythonTokenizer @Inject constructor() {
                     } else {
                         TokenType.IDENTIFIER
                     }
-                    tokens.add(Token(tokenType, identifier, position++))
+                    tokens.add(Token(tokenType, "identifier", position++))
                     i = endIndex
                 }
 

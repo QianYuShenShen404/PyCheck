@@ -30,4 +30,7 @@ interface SimilarityDao {
         reportId: Long,
         threshold: Float
     ): Flow<List<SimilarityEntity>>
+
+    @Query("SELECT * FROM similarity_pairs WHERE id = :similarityId")
+    suspend fun getSimilarityById(similarityId: Long): SimilarityEntity?
 }

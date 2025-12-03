@@ -135,7 +135,9 @@ fun ReportDetailScreen(
                             HighSimilarityCard(
                                 similarity = similarity,
                                 submissionsById = uiState.submissionsById,
-                                onClick = { onNavigateToCodeComparison(similarity.id) }
+                                onClick = { onNavigateToCodeComparison(similarity.id) },
+                                onAnalyze = { viewModel.analyzeSimilarity(similarity.id) },
+                                enabled = similarity.similarityScore >= uiState.similarityThreshold
                             )
                         }
                     }
@@ -188,6 +190,16 @@ fun ReportDetailScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+            AiResultDialog(
+                uiState = uiState,
+                onRetry = {
+                    uiState.selectedSimilarityId?.let { viewModel.analyzeSimilarity(it) }
+                    viewModel.clearAiError()
+                },
+                onCancel = {
+                    viewModel.clearAiError()
+                }
+            )
         }
     }
 }
@@ -273,7 +285,9 @@ private fun ReportSummaryCard(
 private fun HighSimilarityCard(
     similarity: Similarity,
     submissionsById: Map<Long, Submission>,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onAnalyze: () -> Unit,
+    enabled: Boolean
 ) {
     @OptIn(ExperimentalMaterial3Api::class)
     Card(
@@ -312,12 +326,59 @@ private fun HighSimilarityCard(
                     color = MaterialTheme.colorScheme.error
                 )
             }
-            Text(
-                text = "查看详情 →",
-                style = MaterialTheme.typography.bodySmall
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "查看详情 →",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(onClick = onAnalyze, enabled = enabled) {
+                    Text("AI分析")
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun AiResultDialog(
+    uiState: ReportDetailUiState,
+    onRetry: () -> Unit,
+    onCancel: () -> Unit
+) {
+    val show = uiState.aiResult != null || uiState.aiError == "timeout" || (uiState.aiError != null)
+    if (!show) return
+    val title = when {
+        uiState.aiError == "timeout" -> "网络超时"
+        uiState.aiError != null -> "分析失败"
+        else -> "AI分析结果"
+    }
+    val contentText = when {
+        uiState.aiError == "timeout" -> "AI分析请求超时，是否重试？"
+        uiState.aiError != null -> uiState.aiError ?: "分析失败"
+        uiState.aiResult is com.example.codechecker.domain.model.AIAnalysisResult.Success -> {
+            val s = uiState.aiResult as com.example.codechecker.domain.model.AIAnalysisResult.Success
+            "风险:${s.plagiarismRisk}\n原因:${s.reason}\n分析:${s.analysis}"
+        }
+        uiState.aiResult is com.example.codechecker.domain.model.AIAnalysisResult.Error -> {
+            val e = uiState.aiResult as com.example.codechecker.domain.model.AIAnalysisResult.Error
+            "分析失败:${e.message}"
+        }
+        else -> ""
+    }
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(title) },
+        text = { Text(contentText) },
+        confirmButton = {
+            if (uiState.aiError == "timeout" && uiState.selectedSimilarityId != null) {
+                TextButton(onClick = onCancel) { Text("取消") }
+                TextButton(onClick = onRetry) { Text("重试") }
+            } else {
+                TextButton(onClick = onCancel) { Text("确定") }
+            }
+        }
+    )
 }
 
 @Composable

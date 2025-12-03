@@ -333,4 +333,13 @@ import javax.inject.Singleton
                 .sortedByDescending { it.similarityScore }
         }
     }
+
+    /**
+     * Get similarity by ID
+     */
+    suspend fun getSimilarityById(similarityId: Long): Similarity? {
+        return withContext(Dispatchers.IO) {
+            reportRepository.getSimilarityById(similarityId)
+        }
+    }
 }

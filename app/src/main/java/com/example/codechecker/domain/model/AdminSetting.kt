@@ -10,7 +10,13 @@ data class AdminSettings(
     val fastCompareMode: Boolean = false,
     val logLevel: LogLevel = LogLevel.INFO,
     val autoCleanupEnabled: Boolean = false,
-    val maxSubmissionsPerAssignment: Int = 200
+    val maxSubmissionsPerAssignment: Int = 200,
+    val aiBaseUrl: String = "https://api.siliconflow.cn/v1",
+    val aiModel: String = "Qwen/Qwen2.5-72B-Instruct",
+    val aiApiKey: String = "",
+    val aiConnectTimeoutSec: Int = 15,
+    val aiReadTimeoutSec: Int = 30,
+    val aiRetryTimes: Int = 3
 )
 
 /**

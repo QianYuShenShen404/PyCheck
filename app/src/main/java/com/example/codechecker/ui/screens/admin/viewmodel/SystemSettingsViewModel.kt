@@ -34,7 +34,8 @@ class SystemSettingsViewModel @Inject constructor(
     private val updateAdminSettingsUseCase: UpdateAdminSettingsUseCase,
     private val resetSettingsToDefaultUseCase: ResetSettingsToDefaultUseCase,
     private val exportSettingsUseCase: ExportSettingsUseCase,
-    private val importSettingsUseCase: ImportSettingsUseCase
+    private val importSettingsUseCase: ImportSettingsUseCase,
+    private val aiRepository: com.example.codechecker.domain.repository.AIRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SystemSettingsUiState())
@@ -137,6 +138,42 @@ class SystemSettingsViewModel @Inject constructor(
             successMessage = null,
             error = null
         )
+    }
+
+    fun updateAiBaseUrl(value: String) {
+        val current = _uiState.value.settings
+        val newSettings = current.copy(aiBaseUrl = value)
+        _uiState.value = _uiState.value.copy(settings = newSettings, hasUnsavedChanges = true, successMessage = null, error = null)
+    }
+
+    fun updateAiModel(value: String) {
+        val current = _uiState.value.settings
+        val newSettings = current.copy(aiModel = value)
+        _uiState.value = _uiState.value.copy(settings = newSettings, hasUnsavedChanges = true, successMessage = null, error = null)
+    }
+
+    fun updateAiApiKey(value: String) {
+        val current = _uiState.value.settings
+        val newSettings = current.copy(aiApiKey = value)
+        _uiState.value = _uiState.value.copy(settings = newSettings, hasUnsavedChanges = true, successMessage = null, error = null)
+    }
+
+    fun updateAiConnectTimeoutSec(value: Int) {
+        val current = _uiState.value.settings
+        val newSettings = current.copy(aiConnectTimeoutSec = value)
+        _uiState.value = _uiState.value.copy(settings = newSettings, hasUnsavedChanges = true, successMessage = null, error = null)
+    }
+
+    fun updateAiReadTimeoutSec(value: Int) {
+        val current = _uiState.value.settings
+        val newSettings = current.copy(aiReadTimeoutSec = value)
+        _uiState.value = _uiState.value.copy(settings = newSettings, hasUnsavedChanges = true, successMessage = null, error = null)
+    }
+
+    fun updateAiRetryTimes(value: Int) {
+        val current = _uiState.value.settings
+        val newSettings = current.copy(aiRetryTimes = value)
+        _uiState.value = _uiState.value.copy(settings = newSettings, hasUnsavedChanges = true, successMessage = null, error = null)
     }
 
     fun saveSettings(adminUserId: Long = 0) {
@@ -303,7 +340,41 @@ class SystemSettingsViewModel @Inject constructor(
             errors["maxSubmissionsPerAssignment"] = "最大提交数必须大于0"
         }
 
+        if (!settings.aiBaseUrl.startsWith("http")) {
+            errors["aiBaseUrl"] = "AI接口地址格式不正确"
+        }
+        if (settings.aiConnectTimeoutSec !in 1..120) {
+            errors["aiConnectTimeoutSec"] = "连接超时应在1-120秒"
+        }
+        if (settings.aiReadTimeoutSec !in 1..180) {
+            errors["aiReadTimeoutSec"] = "读取超时应在1-180秒"
+        }
+        if (settings.aiRetryTimes !in 1..10) {
+            errors["aiRetryTimes"] = "重试次数应在1-10之间"
+        }
+
         _uiState.value = _uiState.value.copy(validationErrors = errors)
         return errors.isEmpty()
+    }
+
+    fun testAiConnection() {
+        viewModelScope.launch {
+            try {
+                _uiState.value = _uiState.value.copy(isSaving = true, error = null, successMessage = null)
+                val res = aiRepository.analyze("def f():\n    return 1", "def g():\n    return 1", 80.0)
+                when (res) {
+                    is com.example.codechecker.domain.model.AIAnalysisResult.Success -> {
+                        _uiState.value = _uiState.value.copy(isSaving = false, successMessage = "AI连接正常")
+                    }
+                    is com.example.codechecker.domain.model.AIAnalysisResult.Error -> {
+                        _uiState.value = _uiState.value.copy(isSaving = false, error = "AI连接失败: ${res.message}")
+                    }
+                }
+            } catch (e: java.net.SocketTimeoutException) {
+                _uiState.value = _uiState.value.copy(isSaving = false, error = "AI连接超时")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isSaving = false, error = e.message ?: "AI连接失败")
+            }
+        }
     }
 }

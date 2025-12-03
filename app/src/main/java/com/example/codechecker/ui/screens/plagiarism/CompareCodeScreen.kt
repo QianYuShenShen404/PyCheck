@@ -28,6 +28,10 @@ fun CompareCodeScreen(
     viewModel: CompareCodeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showTimeoutDialog by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.aiError) {
+        showTimeoutDialog = uiState.aiError == "timeout"
+    }
 
     LaunchedEffect(similarityId) {
         viewModel.loadSimilarity(similarityId)
@@ -72,6 +76,46 @@ fun CompareCodeScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     SimilarityScoreCard(similarity = similarity)
+
+                    Card {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "AI分析",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val enabled = similarity.similarityScore >= uiState.similarityThreshold
+                                Button(onClick = { viewModel.analyzeWithAI() }, enabled = enabled && !uiState.aiLoading) {
+                                    Text(if (uiState.aiLoading) "分析中…" else "AI分析")
+                                }
+                                if (!enabled) {
+                                    Text(
+                                        text = "相似度低于阈值，按钮不可用",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            when (val res = uiState.aiResult) {
+                                is com.example.codechecker.domain.model.AIAnalysisResult.Success -> {
+                                    Text("风险: ${res.plagiarismRisk}")
+                                    Text("原因: ${res.reason}")
+                                    Text("分析: ${res.analysis}")
+                                }
+                                is com.example.codechecker.domain.model.AIAnalysisResult.Error -> {
+                                    Text("分析失败: ${res.message}")
+                                }
+                                else -> {}
+                            }
+                        }
+                    }
 
                 Text(
                     text = "相似度分布",
@@ -165,6 +209,20 @@ fun CompareCodeScreen(
                     )
                 }
             }
+        }
+
+        if (showTimeoutDialog) {
+            AlertDialog(
+                onDismissRequest = { showTimeoutDialog = false; viewModel.clearAiError() },
+                title = { Text("网络超时") },
+                text = { Text("AI分析请求超时，是否重试？") },
+                confirmButton = {
+                    TextButton(onClick = { showTimeoutDialog = false; viewModel.clearAiError(); viewModel.analyzeWithAI() }) { Text("重试") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showTimeoutDialog = false; viewModel.clearAiError() }) { Text("取消") }
+                }
+            )
         }
     }
 }

@@ -109,7 +109,13 @@ class AdminSettingsRepositoryImpl @Inject constructor(
             fastCompareMode = settingMap["fast_compare_mode"]?.value?.toBooleanStrictOrNull() ?: false,
             logLevel = settingMap["log_level"]?.value?.let { LogLevel.fromValue(it) } ?: LogLevel.INFO,
             autoCleanupEnabled = settingMap["auto_cleanup_enabled"]?.value?.toBooleanStrictOrNull() ?: false,
-            maxSubmissionsPerAssignment = settingMap["max_submissions_per_assignment"]?.value?.toIntOrNull() ?: 200
+            maxSubmissionsPerAssignment = settingMap["max_submissions_per_assignment"]?.value?.toIntOrNull() ?: 200,
+            aiBaseUrl = settingMap["ai_base_url"]?.value ?: "https://api.siliconflow.cn/v1",
+            aiModel = settingMap["ai_model"]?.value ?: "Qwen/Qwen2.5-72B-Instruct",
+            aiApiKey = settingMap["ai_api_key"]?.value ?: "",
+            aiConnectTimeoutSec = settingMap["ai_connect_timeout_sec"]?.value?.toIntOrNull() ?: 15,
+            aiReadTimeoutSec = settingMap["ai_read_timeout_sec"]?.value?.toIntOrNull() ?: 30,
+            aiRetryTimes = settingMap["ai_retry_times"]?.value?.toIntOrNull() ?: 3
         )
     }
 
@@ -122,7 +128,13 @@ class AdminSettingsRepositoryImpl @Inject constructor(
             AdminSettingEntity("fast_compare_mode", settings.fastCompareMode.toString(), "BOOLEAN", currentTime, updatedBy),
             AdminSettingEntity("log_level", settings.logLevel.value, "STRING", currentTime, updatedBy),
             AdminSettingEntity("auto_cleanup_enabled", settings.autoCleanupEnabled.toString(), "BOOLEAN", currentTime, updatedBy),
-            AdminSettingEntity("max_submissions_per_assignment", settings.maxSubmissionsPerAssignment.toString(), "INT", currentTime, updatedBy)
+            AdminSettingEntity("max_submissions_per_assignment", settings.maxSubmissionsPerAssignment.toString(), "INT", currentTime, updatedBy),
+            AdminSettingEntity("ai_base_url", settings.aiBaseUrl, "STRING", currentTime, updatedBy),
+            AdminSettingEntity("ai_model", settings.aiModel, "STRING", currentTime, updatedBy),
+            AdminSettingEntity("ai_api_key", settings.aiApiKey, "STRING", currentTime, updatedBy),
+            AdminSettingEntity("ai_connect_timeout_sec", settings.aiConnectTimeoutSec.toString(), "INT", currentTime, updatedBy),
+            AdminSettingEntity("ai_read_timeout_sec", settings.aiReadTimeoutSec.toString(), "INT", currentTime, updatedBy),
+            AdminSettingEntity("ai_retry_times", settings.aiRetryTimes.toString(), "INT", currentTime, updatedBy)
         )
     }
 
@@ -135,7 +147,13 @@ class AdminSettingsRepositoryImpl @Inject constructor(
             AdminSettingEntity("fast_compare_mode", "false", "BOOLEAN", currentTime, updatedBy),
             AdminSettingEntity("log_level", "INFO", "STRING", currentTime, updatedBy),
             AdminSettingEntity("auto_cleanup_enabled", "false", "BOOLEAN", currentTime, updatedBy),
-            AdminSettingEntity("max_submissions_per_assignment", "200", "INT", currentTime, updatedBy)
+            AdminSettingEntity("max_submissions_per_assignment", "200", "INT", currentTime, updatedBy),
+            AdminSettingEntity("ai_base_url", "https://api.siliconflow.cn/v1", "STRING", currentTime, updatedBy),
+            AdminSettingEntity("ai_model", "Qwen/Qwen2.5-72B-Instruct", "STRING", currentTime, updatedBy),
+            AdminSettingEntity("ai_api_key", "", "STRING", currentTime, updatedBy),
+            AdminSettingEntity("ai_connect_timeout_sec", "15", "INT", currentTime, updatedBy),
+            AdminSettingEntity("ai_read_timeout_sec", "30", "INT", currentTime, updatedBy),
+            AdminSettingEntity("ai_retry_times", "3", "INT", currentTime, updatedBy)
         )
     }
 }

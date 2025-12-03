@@ -180,6 +180,39 @@ fun SystemSettingsScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                SettingsSection(title = "AI设置") {
+                    AiBaseUrlCard(uiState.settings.aiBaseUrl) { url ->
+                        viewModel.updateAiBaseUrl(url)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AiModelCard(uiState.settings.aiModel) { model ->
+                        viewModel.updateAiModel(model)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AiApiKeyCard(uiState.settings.aiApiKey) { key ->
+                        viewModel.updateAiApiKey(key)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AiTimeoutRetryCard(
+                        connectTimeout = uiState.settings.aiConnectTimeoutSec,
+                        readTimeout = uiState.settings.aiReadTimeoutSec,
+                        retryTimes = uiState.settings.aiRetryTimes,
+                        onConnectTimeoutChange = { viewModel.updateAiConnectTimeoutSec(it) },
+                        onReadTimeoutChange = { viewModel.updateAiReadTimeoutSec(it) },
+                        onRetryTimesChange = { viewModel.updateAiRetryTimes(it) }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        OutlinedButton(onClick = { viewModel.testAiConnection() }) {
+                            Text("连接测试")
+                        }
+                    }
+                }
+
                 // Save Button
                 if (uiState.hasUnsavedChanges) {
                     Button(
@@ -543,6 +576,104 @@ fun LogLevelCard(
                     }
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun AiBaseUrlCard(value: String, onValueChange: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = "AI接口地址", style = MaterialTheme.typography.titleSmall)
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Base URL") },
+            singleLine = true
+        )
+        Text(
+            text = "例如：https://api.siliconflow.cn/v1",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun AiModelCard(value: String, onValueChange: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = "模型名称", style = MaterialTheme.typography.titleSmall)
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Model") },
+            singleLine = true
+        )
+        Text(
+            text = "例如：Qwen/Qwen2.5-72B-Instruct",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun AiApiKeyCard(value: String, onValueChange: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = "API Key", style = MaterialTheme.typography.titleSmall)
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("密钥") },
+            singleLine = true,
+            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+        )
+        Text(
+            text = "仅管理员可见并修改，保存后将加密存储",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun AiTimeoutRetryCard(
+    connectTimeout: Int,
+    readTimeout: Int,
+    retryTimes: Int,
+    onConnectTimeoutChange: (Int) -> Unit,
+    onReadTimeoutChange: (Int) -> Unit,
+    onRetryTimesChange: (Int) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = "超时与重试", style = MaterialTheme.typography.titleSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = connectTimeout.toString(),
+                onValueChange = { it.toIntOrNull()?.let(onConnectTimeoutChange) },
+                label = { Text("连接超时(秒)") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+            )
+            OutlinedTextField(
+                value = readTimeout.toString(),
+                onValueChange = { it.toIntOrNull()?.let(onReadTimeoutChange) },
+                label = { Text("读取超时(秒)") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+            )
+            OutlinedTextField(
+                value = retryTimes.toString(),
+                onValueChange = { it.toIntOrNull()?.let(onRetryTimesChange) },
+                label = { Text("重试次数") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+            )
         }
     }
 }

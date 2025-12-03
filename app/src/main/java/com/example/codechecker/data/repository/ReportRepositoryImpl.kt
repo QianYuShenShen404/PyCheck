@@ -83,4 +83,14 @@ class ReportRepositoryImpl @Inject constructor(
             SimilarityMapper.toDomainList(entities)
         }
     }
+
+    override suspend fun getSimilarityById(similarityId: Long): Similarity? {
+        val entity = similarityDao.getSimilarityById(similarityId) ?: return null
+        return SimilarityMapper.toDomain(entity)
+    }
+
+    override suspend fun updateSimilarity(similarity: Similarity) {
+        val entity = SimilarityMapper.toEntity(similarity)
+        similarityDao.updateSimilarity(entity)
+    }
 }

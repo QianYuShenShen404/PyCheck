@@ -20,7 +20,11 @@ data class CompareCodeUiState(
     val code1: String = "",
     val code2: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val similarityThreshold: Int = 0,
+    val aiLoading: Boolean = false,
+    val aiError: String? = null,
+    val aiResult: com.example.codechecker.domain.model.AIAnalysisResult? = null
 )
 
 /**
@@ -29,7 +33,9 @@ data class CompareCodeUiState(
 @HiltViewModel
 class CompareCodeViewModel @Inject constructor(
     private val plagiarismUseCase: PlagiarismUseCase,
-    private val submissionRepository: SubmissionRepository
+    private val submissionRepository: SubmissionRepository,
+    private val getAdminSettingsUseCase: com.example.codechecker.domain.usecase.GetAdminSettingsUseCase,
+    private val aiRepository: com.example.codechecker.domain.repository.AIRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CompareCodeUiState())
@@ -40,20 +46,19 @@ class CompareCodeViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
             try {
-                val similarities = plagiarismUseCase.getSimilaritiesByReport(
-                    reportId = 0L
-                )
-                val similarity = similarities.find { it.id == similarityId }
+                val similarity = plagiarismUseCase.getSimilarityById(similarityId)
 
                 if (similarity != null) {
                     val submission1 = submissionRepository.getSubmissionById(similarity.submission1Id)
                     val submission2 = submissionRepository.getSubmissionById(similarity.submission2Id)
+                    val settings = getAdminSettingsUseCase()
 
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         similarity = similarity,
                         code1 = submission1?.codeContent ?: "",
-                        code2 = submission2?.codeContent ?: ""
+                        code2 = submission2?.codeContent ?: "",
+                        similarityThreshold = settings.similarityThreshold
                     )
                 } else {
                     _uiState.value = _uiState.value.copy(
@@ -72,5 +77,24 @@ class CompareCodeViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun analyzeWithAI() {
+        val s = _uiState.value.similarity ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(aiLoading = true, aiError = null, aiResult = null)
+            try {
+                val res = aiRepository.analyze(_uiState.value.code1, _uiState.value.code2, s.similarityScore.toDouble())
+                _uiState.value = _uiState.value.copy(aiLoading = false, aiResult = res)
+            } catch (e: java.net.SocketTimeoutException) {
+                _uiState.value = _uiState.value.copy(aiLoading = false, aiError = "timeout")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(aiLoading = false, aiError = e.message ?: "分析失败")
+            }
+        }
+    }
+
+    fun clearAiError() {
+        _uiState.value = _uiState.value.copy(aiError = null)
     }
 }
