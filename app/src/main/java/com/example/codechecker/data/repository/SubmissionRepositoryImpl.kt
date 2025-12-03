@@ -68,4 +68,12 @@ class SubmissionRepositoryImpl @Inject constructor(
         val entities = submissionDao.getSubmissionsByUser(userId)
         return SubmissionMapper.toDomainList(entities)
     }
+
+    override suspend fun getSubmittedStudentCountByAssignment(assignmentId: Long): Int {
+        return submissionDao.getSubmittedStudentCountByAssignment(assignmentId)
+    }
+
+    override suspend fun hasStudentSubmittedAssignment(studentId: Long, assignmentId: Long): Boolean {
+        return submissionDao.hasStudentSubmittedAssignment(assignmentId, studentId)
+    }
 }

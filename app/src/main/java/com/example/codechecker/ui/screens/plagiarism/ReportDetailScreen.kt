@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,7 @@ import dagger.hilt.android.EntryPointAccessors
 fun ReportDetailScreen(
     reportId: Long,
     onNavigateBack: () -> Unit,
+    onNavigateHome: () -> Unit,
     onNavigateToCodeComparison: (Long) -> Unit,
     viewModel: ReportDetailViewModel = hiltViewModel()
 ) {
@@ -61,9 +63,17 @@ fun ReportDetailScreen(
                             contentDescription = "返回"
                         )
                     }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateHome) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "主页"
+                        )
+                    }
                 }
             )
-        }
+        },
     ) { paddingValues ->
         Box(
             modifier = Modifier

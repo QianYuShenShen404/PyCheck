@@ -6,6 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,7 +33,9 @@ import dagger.hilt.android.EntryPointAccessors
 @Composable
 fun AssignmentDetailScreen(
     assignmentId: Long,
+    fromSubmission: Boolean = false,
     onNavigateBack: () -> Unit,
+    onNavigateHome: () -> Unit,
     onNavigateToSubmission: (Long) -> Unit,
     onNavigateToSubmissionList: (Long) -> Unit,
     onNavigateToReportList: (Long) -> Unit,
@@ -40,6 +44,7 @@ fun AssignmentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val assignment = uiState.assignment
+    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val timeUtils = remember {
         EntryPointAccessors.fromApplication(
@@ -59,6 +64,12 @@ fun AssignmentDetailScreen(
         viewModel.loadAssignment(assignmentId)
     }
 
+    LaunchedEffect(fromSubmission) {
+        if (fromSubmission) {
+            snackbarHostState.showSnackbar("报告生成成功")
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -70,9 +81,18 @@ fun AssignmentDetailScreen(
                             contentDescription = "返回"
                         )
                     }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateHome) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "主页"
+                        )
+                    }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -108,14 +128,14 @@ fun AssignmentDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            if (uiState.submissionCount > 0) {
+                            if (currentUser?.role == com.example.codechecker.domain.model.Role.TEACHER) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "已提交 ${uiState.submissionCount} 个文件",
+                                        text = "已提交 ${uiState.submittedStudentsCount} 人",
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     TextButton(
@@ -125,11 +145,22 @@ fun AssignmentDetailScreen(
                                     }
                                 }
                             } else {
-                                Text(
-                                    text = "尚未提交",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = if (uiState.studentHasSubmitted) "已提交" else "未提交",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (uiState.studentHasSubmitted) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
+                                    )
+                                    TextButton(
+                                        onClick = { onNavigateToSubmissionList(assignmentId) }
+                                    ) {
+                                        Text("查看提交")
+                                    }
+                                }
                             }
                         }
                     }
@@ -144,7 +175,7 @@ fun AssignmentDetailScreen(
                                 contentDescription = null,
                                 modifier = Modifier.padding(end = 8.dp)
                             )
-                            Text(if (uiState.submissionCount > 0) "继续提交" else "提交代码")
+                            Text(if (uiState.studentHasSubmitted) "继续提交" else "提交代码")
                         }
                     }
 
@@ -172,31 +203,42 @@ fun AssignmentDetailScreen(
                             if (currentUser?.role == com.example.codechecker.domain.model.Role.TEACHER) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     TextButton(onClick = { onNavigateToReportList(assignmentId) }) {
                                         Text("查看报告")
                                     }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Button(
-                                        onClick = { viewModel.generateReportLatestOnly(assignmentId) },
-                                        enabled = !uiState.isGeneratingReport
-                                    ) {
-                                        if (uiState.isGeneratingReport) {
-                                            CircularProgressIndicator(
-                                                color = MaterialTheme.colorScheme.onPrimary,
-                                                modifier = Modifier.size(16.dp)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Button(
+                                            onClick = { viewModel.generateReportLatestOnly(assignmentId) },
+                                            enabled = !uiState.isGeneratingReport,
+                                            modifier = Modifier.widthIn(min = 160.dp)
+                                        ) {
+                                            if (uiState.isGeneratingReport) {
+                                                CircularProgressIndicator(
+                                                    color = MaterialTheme.colorScheme.onPrimary,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                            }
+                                            Text(
+                                                text = "生成（仅最后一次提交）",
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
-                                            Spacer(modifier = Modifier.width(8.dp))
                                         }
-                                        Text("生成（仅最后一次提交）")
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    OutlinedButton(
-                                        onClick = { viewModel.generateReportAllHistory(assignmentId) },
-                                        enabled = !uiState.isGeneratingReport
-                                    ) {
-                                        Text("生成（包含所有历史提交）")
+                                        OutlinedButton(
+                                            onClick = { viewModel.generateReportAllHistory(assignmentId) },
+                                            enabled = !uiState.isGeneratingReport,
+                                            modifier = Modifier.widthIn(min = 160.dp)
+                                        ) {
+                                            Text(
+                                                text = "生成（包含所有历史提交）",
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
                                     }
                                 }
                             }

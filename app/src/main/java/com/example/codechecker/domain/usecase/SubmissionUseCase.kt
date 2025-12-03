@@ -65,6 +65,14 @@ class SubmissionUseCase @Inject constructor(
         }
     }
 
+    suspend fun getSubmittedStudentCountByAssignment(assignmentId: Long): Int {
+        return try {
+            submissionRepository.getSubmittedStudentCountByAssignment(assignmentId)
+        } catch (e: Exception) {
+            0
+        }
+    }
+
     suspend fun getSubmissionsByUser(userId: Long): List<Submission> {
         return try {
             submissionRepository.getSubmissionsByUser(userId)
@@ -78,6 +86,22 @@ class SubmissionUseCase @Inject constructor(
             submissionRepository.getAllSubmissionsByAssignment(assignmentId)
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    suspend fun getSubmissionById(submissionId: Long): Submission? {
+        return try {
+            submissionRepository.getSubmissionById(submissionId)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun hasStudentSubmittedAssignment(studentId: Long, assignmentId: Long): Boolean {
+        return try {
+            submissionRepository.hasStudentSubmittedAssignment(studentId, assignmentId)
+        } catch (e: Exception) {
+            false
         }
     }
 }

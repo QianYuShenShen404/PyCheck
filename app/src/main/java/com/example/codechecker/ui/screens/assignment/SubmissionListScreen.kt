@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +32,8 @@ import dagger.hilt.android.EntryPointAccessors
 fun SubmissionListScreen(
     assignmentId: Long,
     onNavigateBack: () -> Unit,
+    onNavigateHome: () -> Unit,
+    onNavigateToSubmissionDetail: (Long) -> Unit,
     viewModel: SubmissionListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -89,6 +92,12 @@ fun SubmissionListScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateHome) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "主页"
+                        )
+                    }
                     var expanded by remember { mutableStateOf(false) }
                     TextButton(onClick = { expanded = true }) {
                         Text("排序")
@@ -221,7 +230,8 @@ fun SubmissionListScreen(
                             ) { submission ->
                                 SubmissionCard(
                                     submission = submission,
-                                    timeUtils = timeUtils
+                                    timeUtils = timeUtils,
+                                    onViewClick = { onNavigateToSubmissionDetail(submission.id) }
                                 )
                             }
                         }
@@ -244,7 +254,8 @@ fun SubmissionListScreen(
 @Composable
 private fun SubmissionCard(
     submission: Submission,
-    timeUtils: TimeUtils
+    timeUtils: TimeUtils,
+    onViewClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -300,6 +311,20 @@ private fun SubmissionCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "学生学号: ${submission.studentId}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                TextButton(onClick = onViewClick) {
+                    Text("查看")
+                }
             }
         }
     }

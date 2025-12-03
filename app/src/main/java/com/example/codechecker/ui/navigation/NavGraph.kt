@@ -26,6 +26,7 @@ import com.example.codechecker.ui.screens.assignment.AssignmentListScreen
 import com.example.codechecker.ui.screens.assignment.SubmissionListScreen
 import com.example.codechecker.ui.screens.submission.SubmitCodeScreen
 import com.example.codechecker.ui.screens.submission.SubmissionHistoryScreen
+import com.example.codechecker.ui.screens.submission.SubmissionDetailScreen
 import com.example.codechecker.ui.screens.plagiarism.ReportListScreen
 import com.example.codechecker.ui.screens.plagiarism.ReportDetailScreen
 import com.example.codechecker.ui.screens.plagiarism.CompareCodeScreen
@@ -89,6 +90,7 @@ fun NavGraph(
         // Home screens
         composable(Screen.MAIN_STUDENT) {
             com.example.codechecker.ui.screens.main.MainStudentScreen(
+                onNavigateToSubmissionHistory = { navController.navigate(Screen.SUBMISSIONS_LIST) },
                 onNavigateToAssignmentDetail = { assignmentId ->
                     navController.navigate(createAssignmentDetailRoute(assignmentId))
                 },
@@ -161,8 +163,25 @@ fun NavGraph(
 
         // Assignment screens
         composable(Screen.ASSIGNMENT_LIST) {
+            val context = LocalContext.current
+            val userSessionManager = remember {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    com.example.codechecker.di.UtilityModuleEntryPoint::class.java
+                ).userSessionManager()
+            }
+            val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
             AssignmentListScreen(
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateHome = {
+                    val dest = when (currentUser?.role) {
+                        Role.ADMIN -> Screen.MAIN_ADMIN
+                        Role.TEACHER -> Screen.MAIN_TEACHER
+                        Role.STUDENT -> Screen.MAIN_STUDENT
+                        else -> Screen.MAIN_STUDENT
+                    }
+                    navController.navigate(dest)
+                },
                 onNavigateToAssignmentDetail = { assignmentId ->
                     navController.navigate(createAssignmentDetailRoute(assignmentId))
                 }
@@ -170,15 +189,35 @@ fun NavGraph(
         }
 
         composable(
-            route = "${Screen.ASSIGNMENT_DETAIL}?${NavArguments.ASSIGNMENT_ID}={${NavArguments.ASSIGNMENT_ID}}",
+            route = "${Screen.ASSIGNMENT_DETAIL}?${NavArguments.ASSIGNMENT_ID}={${NavArguments.ASSIGNMENT_ID}}&fromSubmission={fromSubmission}",
             arguments = listOf(
-                navArgument(NavArguments.ASSIGNMENT_ID) { type = NavType.LongType }
+                navArgument(NavArguments.ASSIGNMENT_ID) { type = NavType.LongType },
+                navArgument("fromSubmission") { type = NavType.BoolType; defaultValue = false }
             )
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getLong(NavArguments.ASSIGNMENT_ID)
                 ?: throw IllegalArgumentException("Assignment ID is required")
+            val fromSubmission = backStackEntry.arguments?.getBoolean("fromSubmission") ?: false
+            val context = LocalContext.current
+            val userSessionManager = remember {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    com.example.codechecker.di.UtilityModuleEntryPoint::class.java
+                ).userSessionManager()
+            }
+            val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
             AssignmentDetailScreen(
                 assignmentId = assignmentId,
+                fromSubmission = fromSubmission,
+                onNavigateHome = {
+                    val dest = when (currentUser?.role) {
+                        Role.ADMIN -> Screen.MAIN_ADMIN
+                        Role.TEACHER -> Screen.MAIN_TEACHER
+                        Role.STUDENT -> Screen.MAIN_STUDENT
+                        else -> Screen.MAIN_STUDENT
+                    }
+                    navController.navigate(dest)
+                },
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToSubmission = { assignmentId ->
                     navController.navigate(createSubmissionRoute(assignmentId))
@@ -217,10 +256,50 @@ fun NavGraph(
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getLong("assignmentId")
                 ?: throw IllegalArgumentException("Assignment ID is required")
-            SubmissionListScreen(
-                assignmentId = assignmentId,
-                onNavigateBack = { navController.popBackStack() }
-            )
+            val context = LocalContext.current
+            val userSessionManager = remember {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    com.example.codechecker.di.UtilityModuleEntryPoint::class.java
+                ).userSessionManager()
+            }
+            val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
+            val role = currentUser?.role
+            if (role == Role.TEACHER || role == Role.ADMIN) {
+                SubmissionListScreen(
+                    assignmentId = assignmentId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateHome = {
+                        val dest = when (currentUser?.role) {
+                            Role.ADMIN -> Screen.MAIN_ADMIN
+                            Role.TEACHER -> Screen.MAIN_TEACHER
+                            Role.STUDENT -> Screen.MAIN_STUDENT
+                            else -> Screen.MAIN_STUDENT
+                        }
+                        navController.navigate(dest)
+                    },
+                    onNavigateToSubmissionDetail = { sid ->
+                        navController.navigate(createSubmissionDetailRoute(sid))
+                    }
+                )
+            } else {
+                SubmissionHistoryScreen(
+                    assignmentId = assignmentId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateHome = {
+                        val dest = when (currentUser?.role) {
+                            Role.ADMIN -> Screen.MAIN_ADMIN
+                            Role.TEACHER -> Screen.MAIN_TEACHER
+                            Role.STUDENT -> Screen.MAIN_STUDENT
+                            else -> Screen.MAIN_STUDENT
+                        }
+                        navController.navigate(dest)
+                    },
+                    onNavigateToSubmissionDetail = { sid ->
+                        navController.navigate(createSubmissionDetailRoute(sid))
+                    }
+                )
+            }
         }
 
         // Submission screens
@@ -232,20 +311,88 @@ fun NavGraph(
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getLong(NavArguments.ASSIGNMENT_ID)
                 ?: throw IllegalArgumentException("Assignment ID is required")
+            val context = LocalContext.current
+            val userSessionManager = remember {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    com.example.codechecker.di.UtilityModuleEntryPoint::class.java
+                ).userSessionManager()
+            }
+            val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
             SubmitCodeScreen(
                 assignmentId = assignmentId,
                 onNavigateBack = { navController.popBackStack() },
                 onSubmissionSuccess = {
-                    navController.navigate(createAssignmentDetailRoute(assignmentId)) {
-                        popUpTo(createAssignmentDetailRoute(assignmentId))
+                    navController.navigate(createAssignmentDetailRoute(assignmentId, fromSubmission = true)) {
+                        popUpTo(createAssignmentDetailRoute(assignmentId, fromSubmission = true))
                     }
+                },
+                onNavigateHome = {
+                    val dest = when (currentUser?.role) {
+                        Role.ADMIN -> Screen.MAIN_ADMIN
+                        Role.TEACHER -> Screen.MAIN_TEACHER
+                        Role.STUDENT -> Screen.MAIN_STUDENT
+                        else -> Screen.MAIN_STUDENT
+                    }
+                    navController.navigate(dest)
                 }
             )
         }
 
         composable(Screen.SUBMISSIONS_LIST) {
+            val context = LocalContext.current
+            val userSessionManager = remember {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    com.example.codechecker.di.UtilityModuleEntryPoint::class.java
+                ).userSessionManager()
+            }
+            val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
             SubmissionHistoryScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateHome = {
+                    val dest = when (currentUser?.role) {
+                        Role.ADMIN -> Screen.MAIN_ADMIN
+                        Role.TEACHER -> Screen.MAIN_TEACHER
+                        Role.STUDENT -> Screen.MAIN_STUDENT
+                        else -> Screen.MAIN_STUDENT
+                    }
+                    navController.navigate(dest)
+                },
+                onNavigateToSubmissionDetail = { sid ->
+                    navController.navigate(createSubmissionDetailRoute(sid))
+                }
+            )
+        }
+
+        composable(
+            route = "${Screen.SUBMISSION_DETAIL}?${NavArguments.SUBMISSION_ID}={${NavArguments.SUBMISSION_ID}}",
+            arguments = listOf(
+                navArgument(NavArguments.SUBMISSION_ID) { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val submissionId = backStackEntry.arguments?.getLong(NavArguments.SUBMISSION_ID)
+                ?: throw IllegalArgumentException("Submission ID is required")
+            val context = LocalContext.current
+            val userSessionManager = remember {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    com.example.codechecker.di.UtilityModuleEntryPoint::class.java
+                ).userSessionManager()
+            }
+            val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
+            SubmissionDetailScreen(
+                submissionId = submissionId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateHome = {
+                    val dest = when (currentUser?.role) {
+                        Role.ADMIN -> Screen.MAIN_ADMIN
+                        Role.TEACHER -> Screen.MAIN_TEACHER
+                        Role.STUDENT -> Screen.MAIN_STUDENT
+                        else -> Screen.MAIN_STUDENT
+                    }
+                    navController.navigate(dest)
+                }
             )
         }
 
@@ -257,9 +404,26 @@ fun NavGraph(
             )
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getLong(NavArguments.ASSIGNMENT_ID)
+            val context = LocalContext.current
+            val userSessionManager = remember {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    com.example.codechecker.di.UtilityModuleEntryPoint::class.java
+                ).userSessionManager()
+            }
+            val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
             ReportListScreen(
                 assignmentId = assignmentId,
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateHome = {
+                    val dest = when (currentUser?.role) {
+                        Role.ADMIN -> Screen.MAIN_ADMIN
+                        Role.TEACHER -> Screen.MAIN_TEACHER
+                        Role.STUDENT -> Screen.MAIN_STUDENT
+                        else -> Screen.MAIN_STUDENT
+                    }
+                    navController.navigate(dest)
+                },
                 onNavigateToReportDetail = { reportId ->
                     navController.navigate(createPlagiarismReportRoute(reportId))
                 }
@@ -273,9 +437,26 @@ fun NavGraph(
         ) { backStackEntry ->
             val reportId = backStackEntry.arguments?.getLong(NavArguments.REPORT_ID)
                 ?: throw IllegalArgumentException("Report ID is required")
+            val context = LocalContext.current
+            val userSessionManager = remember {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    com.example.codechecker.di.UtilityModuleEntryPoint::class.java
+                ).userSessionManager()
+            }
+            val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
             ReportDetailScreen(
                 reportId = reportId,
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateHome = {
+                    val dest = when (currentUser?.role) {
+                        Role.ADMIN -> Screen.MAIN_ADMIN
+                        Role.TEACHER -> Screen.MAIN_TEACHER
+                        Role.STUDENT -> Screen.MAIN_STUDENT
+                        else -> Screen.MAIN_STUDENT
+                    }
+                    navController.navigate(dest)
+                },
                 onNavigateToCodeComparison = { similarityId ->
                     navController.navigate(createCodeComparisonRoute(similarityId))
                 }

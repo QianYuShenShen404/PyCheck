@@ -20,6 +20,7 @@ import com.example.codechecker.ui.screens.profile.ProfileScreen
 
 @Composable
 fun MainStudentScreen(
+    onNavigateToSubmissionHistory: () -> Unit,
     onNavigateToAssignmentDetail: (Long) -> Unit,
     onLogout: () -> Unit,
     onSwitchAccount: () -> Unit,
@@ -36,13 +37,13 @@ fun MainStudentScreen(
                 NavigationBarItem(
                     selected = selectedIndex.value == 0,
                     onClick = { selectedIndex.value = 0 },
-                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                    icon = { Icon(Icons.Filled.Home, contentDescription = null) },
                     label = null
                 )
                 NavigationBarItem(
                     selected = selectedIndex.value == 1,
                     onClick = { selectedIndex.value = 1 },
-                    icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    icon = { Icon(Icons.Filled.Person, contentDescription = null) },
                     label = null
                 )
             }
@@ -51,7 +52,7 @@ fun MainStudentScreen(
         Box(Modifier.fillMaxSize().padding(paddingValues)) {
             if (selectedIndex.value == 0) {
                 StudentHomeScreen(
-                    onNavigateToSubmissionHistory = onSwitchAccount,
+                    onNavigateToSubmissionHistory = onNavigateToSubmissionHistory,
                     onNavigateToAssignmentDetail = onNavigateToAssignmentDetail,
                     onLogout = onLogout
                 )

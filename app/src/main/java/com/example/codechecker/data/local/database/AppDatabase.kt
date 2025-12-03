@@ -34,7 +34,7 @@ import com.example.codechecker.data.local.entity.UserEntity
         AdminAuditLogEntity::class,
         AdminSettingEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

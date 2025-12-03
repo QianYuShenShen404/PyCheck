@@ -39,4 +39,10 @@ interface SubmissionDao {
 
     @Query("SELECT * FROM submissions WHERE student_id = :studentId ORDER BY submitted_at DESC")
     suspend fun getSubmissionsByUser(studentId: Long): List<SubmissionEntity>
+
+    @Query("SELECT COUNT(DISTINCT student_id) FROM submissions WHERE assignment_id = :assignmentId")
+    suspend fun getSubmittedStudentCountByAssignment(assignmentId: Long): Int
+
+    @Query("SELECT EXISTS(SELECT 1 FROM submissions WHERE assignment_id = :assignmentId AND student_id = :studentId)")
+    suspend fun hasStudentSubmittedAssignment(assignmentId: Long, studentId: Long): Boolean
 }

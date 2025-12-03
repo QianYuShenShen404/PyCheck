@@ -21,6 +21,7 @@ object Screen {
     const val ASSIGNMENT_CREATE = "assignment_create"
     const val SUBMISSION = "submission"
     const val SUBMISSIONS_LIST = "submissions_list"
+    const val SUBMISSION_DETAIL = "submission_detail"
     const val PLAGIARISM_REPORT = "plagiarism_report"
     const val PLAGIARISM_REPORT_LIST = "plagiarism_report_list"
     const val CODE_COMPARISON = "code_comparison"
@@ -55,8 +56,8 @@ fun createAssignmentRoute(assignmentId: Long? = null): String {
     }
 }
 
-fun createAssignmentDetailRoute(assignmentId: Long): String {
-    return "${Screen.ASSIGNMENT_DETAIL}?${NavArguments.ASSIGNMENT_ID}=$assignmentId"
+fun createAssignmentDetailRoute(assignmentId: Long, fromSubmission: Boolean = false): String {
+    return "${Screen.ASSIGNMENT_DETAIL}?${NavArguments.ASSIGNMENT_ID}=$assignmentId&fromSubmission=$fromSubmission"
 }
 
 fun createSubmissionRoute(assignmentId: Long): String {
@@ -73,4 +74,8 @@ fun createCodeComparisonRoute(similarityId: Long): String {
 
 fun createReportListRoute(assignmentId: Long): String {
     return "${Screen.PLAGIARISM_REPORT_LIST}?${NavArguments.ASSIGNMENT_ID}=$assignmentId"
+}
+
+fun createSubmissionDetailRoute(submissionId: Long): String {
+    return "${Screen.SUBMISSION_DETAIL}?${NavArguments.SUBMISSION_ID}=$submissionId"
 }

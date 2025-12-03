@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +33,7 @@ import dagger.hilt.android.EntryPointAccessors
 @Composable
 fun AssignmentListScreen(
     onNavigateBack: () -> Unit,
+    onNavigateHome: () -> Unit,
     onNavigateToAssignmentDetail: (Long) -> Unit,
     viewModel: AssignmentListViewModel = hiltViewModel()
 ) {
@@ -86,6 +88,12 @@ fun AssignmentListScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateHome) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "主页"
+                        )
+                    }
                     var expanded by remember { mutableStateOf(false) }
                     IconButton(onClick = { expanded = true }) {
                         Icon(

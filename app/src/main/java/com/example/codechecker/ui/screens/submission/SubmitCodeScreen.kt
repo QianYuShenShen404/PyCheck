@@ -3,6 +3,7 @@ package com.example.codechecker.ui.screens.submission
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,9 +23,11 @@ fun SubmitCodeScreen(
     assignmentId: Long,
     onNavigateBack: () -> Unit,
     onSubmissionSuccess: () -> Unit,
+    onNavigateHome: () -> Unit,
     viewModel: SubmitCodeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var codeText by remember { mutableStateOf("") }
 
@@ -37,7 +40,12 @@ fun SubmitCodeScreen(
     }
     val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
 
-    // 保留在当前页面以便查看相似度结果，提供显式返回按钮
+    LaunchedEffect(uiState.isSubmissionSuccess) {
+        if (uiState.isSubmissionSuccess) {
+            snackbarHostState.showSnackbar("提交成功")
+            onSubmissionSuccess()
+        }
+    }
 
     fun handleSubmit() {
         if (codeText.isNotBlank()) {
@@ -59,9 +67,18 @@ fun SubmitCodeScreen(
                             contentDescription = "返回"
                         )
                     }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateHome) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "主页"
+                        )
+                    }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -165,31 +182,6 @@ fun SubmitCodeScreen(
                     )
                 }
 
-                if (uiState.similarities.isNotEmpty()) {
-                    Text(
-                        text = "相似度结果",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    val sorted = uiState.similarities.sortedByDescending { it.similarityScore }
-                    val currentId = uiState.newSubmissionId
-                    sorted.take(5).forEach { sim ->
-                        val otherId = if (currentId != null && sim.submission1Id == currentId) sim.submission2Id else sim.submission1Id
-                        com.example.codechecker.ui.components.CodeCard(
-                            fileName = "与提交ID $otherId",
-                            similarityScore = sim.similarityScore,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = onSubmissionSuccess,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("返回作业详情")
-                    }
-                }
             }
         }
     }

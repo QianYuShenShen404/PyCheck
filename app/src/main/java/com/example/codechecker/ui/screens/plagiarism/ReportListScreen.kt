@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,6 +31,7 @@ import dagger.hilt.android.EntryPointAccessors
 fun ReportListScreen(
     assignmentId: Long?,
     onNavigateBack: () -> Unit,
+    onNavigateHome: () -> Unit,
     onNavigateToReportDetail: (Long) -> Unit,
     viewModel: ReportListViewModel = hiltViewModel()
 ) {
@@ -58,6 +60,14 @@ fun ReportListScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "返回"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateHome) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "主页"
                         )
                     }
                 }

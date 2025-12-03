@@ -22,6 +22,8 @@ data class AssignmentDetailUiState(
     val isLoading: Boolean = false,
     val assignment: Assignment? = null,
     val submissionCount: Int = 0,
+    val studentHasSubmitted: Boolean = false,
+    val submittedStudentsCount: Int = 0,
     val error: String? = null,
     val isGeneratingReport: Boolean = false,
     val generateProgress: Float = 0f,
@@ -51,11 +53,18 @@ class AssignmentDetailViewModel @Inject constructor(
             try {
                 val assignment = assignmentUseCase.getAssignmentById(assignmentId)
                 val submissionCount = submissionUseCase.getSubmissionCountByAssignment(assignmentId)
+                val currentUser = userSessionManager.getCurrentUser()
+                val hasSubmitted = currentUser?.let { user ->
+                    submissionUseCase.hasStudentSubmittedAssignment(user.id, assignmentId)
+                } ?: false
+                val submittedStudents = submissionUseCase.getSubmittedStudentCountByAssignment(assignmentId)
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     assignment = assignment,
                     submissionCount = submissionCount,
+                    studentHasSubmitted = hasSubmitted,
+                    submittedStudentsCount = submittedStudents,
                     error = null
                 )
 
@@ -71,6 +80,8 @@ class AssignmentDetailViewModel @Inject constructor(
                     isLoading = false,
                     assignment = null,
                     submissionCount = 0,
+                    studentHasSubmitted = false,
+                    submittedStudentsCount = 0,
                     error = e.message ?: "加载作业失败"
                 )
             }

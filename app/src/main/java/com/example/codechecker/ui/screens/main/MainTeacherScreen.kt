@@ -38,13 +38,13 @@ fun MainTeacherScreen(
                 NavigationBarItem(
                     selected = selectedIndex.value == 0,
                     onClick = { selectedIndex.value = 0 },
-                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                    icon = { Icon(Icons.Filled.Home, contentDescription = null) },
                     label = null
                 )
                 NavigationBarItem(
                     selected = selectedIndex.value == 1,
                     onClick = { selectedIndex.value = 1 },
-                    icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    icon = { Icon(Icons.Filled.Person, contentDescription = null) },
                     label = null
                 )
             }

@@ -60,4 +60,14 @@ interface SubmissionRepository {
      * Get submissions by user
      */
     suspend fun getSubmissionsByUser(userId: Long): List<Submission>
+
+    /**
+     * Get distinct submitted students count for an assignment
+     */
+    suspend fun getSubmittedStudentCountByAssignment(assignmentId: Long): Int
+
+    /**
+     * Check if a student has at least one submission for an assignment
+     */
+    suspend fun hasStudentSubmittedAssignment(studentId: Long, assignmentId: Long): Boolean
 }

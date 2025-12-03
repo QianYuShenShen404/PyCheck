@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +30,10 @@ import dagger.hilt.android.EntryPointAccessors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubmissionHistoryScreen(
+    assignmentId: Long? = null,
     onNavigateBack: () -> Unit,
+    onNavigateHome: () -> Unit,
+    onNavigateToSubmissionDetail: (Long) -> Unit,
     viewModel: SubmissionHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -42,6 +46,12 @@ fun SubmissionHistoryScreen(
         ).timeUtils()
     }
 
+    LaunchedEffect(assignmentId) {
+        if (assignmentId != null) {
+            viewModel.loadSubmissions(assignmentId)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -51,6 +61,14 @@ fun SubmissionHistoryScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "返回"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateHome) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "主页"
                         )
                     }
                 }
@@ -86,7 +104,11 @@ fun SubmissionHistoryScreen(
                     }
 
                     items(submissions) { submission ->
-                        SubmissionCard(submission = submission, timeUtils = timeUtils)
+                        SubmissionCard(
+                            submission = submission,
+                            timeUtils = timeUtils,
+                            onViewClick = { onNavigateToSubmissionDetail(submission.id) }
+                        )
                     }
                 }
             }
@@ -116,7 +138,8 @@ fun SubmissionHistoryScreen(
 @Composable
 private fun SubmissionCard(
     submission: Submission,
-    timeUtils: TimeUtils
+    timeUtils: TimeUtils,
+    onViewClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -186,6 +209,16 @@ private fun SubmissionCard(
                         },
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
+                }
+                
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onViewClick) {
+                    Text("查看")
                 }
             }
         }

@@ -34,17 +34,23 @@ class SubmissionHistoryViewModel @Inject constructor(
     val uiState: StateFlow<SubmissionHistoryUiState> = _uiState.asStateFlow()
 
     init {
-        loadSubmissions()
+        loadSubmissions(null)
     }
 
-    fun loadSubmissions() {
+    fun loadSubmissions(assignmentId: Long? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
             try {
                 val currentUser = userSessionManager.getCurrentUser()
                 val submissions = currentUser?.let { user ->
-                    submissionUseCase.getSubmissionsByUser(user.id)
+                    if (assignmentId == null) {
+                        submissionUseCase.getSubmissionsByUser(user.id)
+                    } else {
+                        submissionUseCase.getAllSubmissionsByAssignment(assignmentId)
+                            .filter { it.studentId == user.id }
+                            .sortedByDescending { it.submittedAt }
+                    }
                 } ?: emptyList()
 
                 _uiState.value = _uiState.value.copy(
