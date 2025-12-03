@@ -12,6 +12,7 @@ data class Submission(
     val codeHash: String,
     val status: SubmissionStatus,
     val submittedAt: Long,
+    val studentNumber: String = "",
     val studentName: String = "",
     val fileSize: Long = 0
 )

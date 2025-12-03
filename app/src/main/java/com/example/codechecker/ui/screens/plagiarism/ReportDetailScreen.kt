@@ -47,6 +47,14 @@ fun ReportDetailScreen(
     val currentUser by userSessionManager.currentUser.collectAsStateWithLifecycle(initialValue = null)
     val report = uiState.report
     val similarities = uiState.similarities
+    var threshold by remember { mutableStateOf(0f) }
+    val filteredSimilarities = remember(similarities, threshold) {
+        if (threshold <= 0f) similarities else similarities.filter { it.similarityScore >= threshold }
+    }
+    val filteredHighSimilarities = remember(similarities, threshold) {
+        similarities.filter { it.similarityScore >= threshold }
+            .sortedByDescending { it.similarityScore }
+    }
 
     LaunchedEffect(reportId) {
         viewModel.loadReport(reportId)
@@ -107,23 +115,23 @@ fun ReportDetailScreen(
 
                     item {
                         Text(
-                            text = "高相似度警告 (>60%)",
+                            text = "高相似度（≥${threshold.toInt()}%）",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp)
                         )
                     }
 
-                    if (uiState.highSimilarities.isEmpty()) {
+                    if (filteredHighSimilarities.isEmpty()) {
                         item {
                             Text(
-                                text = "未发现高相似度代码对",
+                                text = "未发现相似度达到阈值的代码对",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     } else {
-                        items(uiState.highSimilarities) { similarity ->
+                        items(filteredHighSimilarities) { similarity ->
                             HighSimilarityCard(
                                 similarity = similarity,
                                 submissionsById = uiState.submissionsById,
@@ -133,15 +141,39 @@ fun ReportDetailScreen(
                     }
 
                     item {
-                        Text(
-                            text = "所有比对结果",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "所有比对结果",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "筛选：相似度 ≥ ${threshold.toInt()}%",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Slider(
+                                        value = threshold,
+                                        onValueChange = { threshold = it },
+                                        valueRange = 0f..100f,
+                                        steps = 19
+                                    )
+                                }
+                                OutlinedButton(onClick = { threshold = 0f }) {
+                                    Text("重置")
+                                }
+                            }
+                        }
                     }
 
-                    items(similarities) { similarity ->
+                    items(filteredSimilarities) { similarity ->
                         SimilarityCard(
                             similarity = similarity,
                             submissionsById = uiState.submissionsById,

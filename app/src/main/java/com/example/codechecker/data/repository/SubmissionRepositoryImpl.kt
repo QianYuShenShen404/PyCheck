@@ -56,7 +56,7 @@ class SubmissionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAllSubmissionsByAssignment(assignmentId: Long): List<Submission> {
-        val entities = submissionDao.getSubmissionsByAssignment(assignmentId)
+        val entities = submissionDao.getSubmissionsByAssignmentWithStudentInfo(assignmentId)
         return SubmissionMapper.toDomainList(entities)
     }
 

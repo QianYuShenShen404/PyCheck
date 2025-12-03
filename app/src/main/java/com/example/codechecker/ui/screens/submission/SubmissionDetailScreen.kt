@@ -71,7 +71,7 @@ fun SubmissionDetailScreen(
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Text(
-                                text = "学生学号: ${submission.studentId}",
+                                text = "学生学号: ${submission.studentNumber}",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(

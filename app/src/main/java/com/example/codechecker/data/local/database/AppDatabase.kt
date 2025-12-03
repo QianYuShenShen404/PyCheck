@@ -34,7 +34,7 @@ import com.example.codechecker.data.local.entity.UserEntity
         AdminAuditLogEntity::class,
         AdminSettingEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -173,5 +173,27 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         )
         database.execSQL("DROP TABLE assignments")
         database.execSQL("ALTER TABLE assignments_new RENAME TO assignments")
+    }
+}
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            "ALTER TABLE submissions ADD COLUMN student_number TEXT NOT NULL DEFAULT ''"
+        )
+        database.execSQL(
+            "ALTER TABLE submissions ADD COLUMN student_name TEXT NOT NULL DEFAULT ''"
+        )
+        database.execSQL(
+            """
+            UPDATE submissions
+            SET student_number = (
+                SELECT username FROM users WHERE users.id = submissions.student_id
+            ),
+                student_name = (
+                SELECT displayName FROM users WHERE users.id = submissions.student_id
+            )
+            """
+        )
     }
 }

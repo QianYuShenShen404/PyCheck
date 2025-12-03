@@ -21,7 +21,9 @@ object SubmissionMapper {
             codeContent = entity.codeContent,
             codeHash = entity.codeHash,
             status = SubmissionStatus.fromValue(entity.status),
-            submittedAt = entity.submittedAt
+            submittedAt = entity.submittedAt,
+            studentNumber = entity.studentNumber,
+            studentName = entity.studentName
         )
     }
 
@@ -37,7 +39,9 @@ object SubmissionMapper {
             codeContent = domain.codeContent,
             codeHash = domain.codeHash,
             status = domain.status.value,
-            submittedAt = domain.submittedAt
+            submittedAt = domain.submittedAt,
+            studentNumber = domain.studentNumber,
+            studentName = domain.studentName
         )
     }
 

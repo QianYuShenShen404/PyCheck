@@ -78,7 +78,9 @@ class SubmitCodeViewModel @Inject constructor(
                     assignmentId = assignmentId,
                     studentId = currentUser.id,
                     fileName = "submission_${System.currentTimeMillis()}.py",
-                    codeContent = codeContent
+                    codeContent = codeContent,
+                    studentNumber = currentUser.username,
+                    studentName = currentUser.displayName
                 )
 
                 result.fold(

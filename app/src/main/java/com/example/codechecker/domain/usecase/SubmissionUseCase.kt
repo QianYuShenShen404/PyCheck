@@ -21,7 +21,9 @@ class SubmissionUseCase @Inject constructor(
         assignmentId: Long,
         studentId: Long,
         fileName: String,
-        codeContent: String
+        codeContent: String,
+        studentNumber: String = "",
+        studentName: String = ""
     ): Result<Long> {
         return try {
             if (!fileUtils.isPythonFile(fileName)) {
@@ -35,7 +37,9 @@ class SubmissionUseCase @Inject constructor(
                 codeContent = codeContent,
                 codeHash = codeHash,
                 status = com.example.codechecker.domain.model.SubmissionStatus.SUBMITTED,
-                submittedAt = System.currentTimeMillis()
+                submittedAt = System.currentTimeMillis(),
+                studentNumber = studentNumber,
+                studentName = studentName
             )
             val submissionId = submissionRepository.submitCode(submission)
             Result.success(submissionId)

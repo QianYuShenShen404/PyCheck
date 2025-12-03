@@ -31,5 +31,11 @@ data class SubmissionEntity(
     val status: String, // "SUBMITTED", "ANALYZED", "PROCESSED"
 
     @ColumnInfo(name = "submitted_at")
-    val submittedAt: Long
+    val submittedAt: Long,
+
+    @ColumnInfo(name = "student_number")
+    val studentNumber: String = "",
+
+    @ColumnInfo(name = "student_name")
+    val studentName: String = ""
 )

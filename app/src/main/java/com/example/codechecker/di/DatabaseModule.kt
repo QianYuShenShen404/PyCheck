@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.example.codechecker.data.local.database.AppDatabase
 import com.example.codechecker.data.local.database.DatabaseCallback
 import com.example.codechecker.data.local.database.MIGRATION_1_2
+import com.example.codechecker.data.local.database.MIGRATION_3_4
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,7 +35,7 @@ object DatabaseModule {
             "codechecker_database"
         )
         .addCallback(databaseCallback)
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_3_4)
         .fallbackToDestructiveMigration()
         .build()
     }
