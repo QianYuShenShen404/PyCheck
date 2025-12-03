@@ -52,7 +52,7 @@ import javax.inject.Singleton
             )
             val reportId = reportRepository.createReport(report)
             progressCallback?.invoke(0.1f)
-            val similarities = plagiarismEngine.detectPlagiarismFast(latest) { p ->
+            val similarities = plagiarismEngine.detectPlagiarism(latest) { p ->
                 val mapped = 0.1f + (p.current.toFloat() / p.total.toFloat()) * 0.8f
                 progressCallback?.invoke(mapped)
             }
