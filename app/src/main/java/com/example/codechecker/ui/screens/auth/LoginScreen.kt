@@ -63,7 +63,7 @@ fun LoginScreen(
         var isValid = true
 
         usernameError = when {
-            username.isEmpty() -> "用户名不能为空"
+            username.isEmpty() -> "工号/学号不能为空"
             else -> null
         }.also { isValid = isValid && it == null }
 
@@ -113,12 +113,12 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Username field
+            // Staff/Student ID field
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("用户名") },
-                placeholder = { Text("请输入用户名") },
+                label = { Text("工号/学号") },
+                placeholder = { Text("请输入工号/学号") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Ascii,

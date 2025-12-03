@@ -11,6 +11,7 @@ object Screen {
     const val HOME_TEACHER = "home_teacher"
     const val MAIN_STUDENT = "main_student"
     const val MAIN_TEACHER = "main_teacher"
+    const val MAIN_ADMIN = "main_admin"
     const val PROFILE_ACCOUNT = "profile_account"
     const val PROFILE_NOTIFICATIONS = "profile_notifications"
     const val PROFILE_SECURITY = "profile_security"
@@ -23,6 +24,14 @@ object Screen {
     const val PLAGIARISM_REPORT = "plagiarism_report"
     const val PLAGIARISM_REPORT_LIST = "plagiarism_report_list"
     const val CODE_COMPARISON = "code_comparison"
+
+    // Admin screens
+    const val ADMIN_DASHBOARD = "admin_dashboard"
+    const val ADMIN_USER_MANAGEMENT = "admin_user_management"
+    const val ADMIN_DATA_MANAGEMENT = "admin_data_management"
+    const val ADMIN_SYSTEM_SETTINGS = "admin_system_settings"
+    const val ADMIN_AUDIT_LOGS = "admin_audit_logs"
+    const val ADMIN_SECURITY = "admin_security"
 }
 
 /**

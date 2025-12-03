@@ -72,12 +72,12 @@ class AuthUseCase @Inject constructor(
             }
 
             val user = userRepository.getUserById(userId) ?: return Result.failure(Exception("用户不存在"))
-            val oldHash = cryptoUtils.hashPassword(oldPassword)
+            val oldHash = cryptoUtils.sha256(oldPassword)
             val ok = userRepository.login(user.username, oldHash) != null
             if (!ok) {
                 return Result.failure(Exception("原密码错误"))
             }
-            val newHash = cryptoUtils.hashPassword(newPassword)
+            val newHash = cryptoUtils.sha256(newPassword)
             userRepository.updatePassword(userId, newHash)
             Result.success(Unit)
         } catch (e: Exception) {
@@ -88,7 +88,7 @@ class AuthUseCase @Inject constructor(
     suspend fun verifyPassword(userId: Long, oldPassword: String): Result<Unit> {
         return try {
             val user = userRepository.getUserById(userId) ?: return Result.failure(Exception("用户不存在"))
-            val oldHash = cryptoUtils.hashPassword(oldPassword)
+            val oldHash = cryptoUtils.sha256(oldPassword)
             val ok = userRepository.login(user.username, oldHash) != null
             if (!ok) Result.failure(Exception("原密码错误")) else Result.success(Unit)
         } catch (e: Exception) {

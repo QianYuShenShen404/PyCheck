@@ -65,7 +65,13 @@ fun NavGraph(
             LoginScreen(
                 onNavigateToRegister = { navController.navigate(Screen.REGISTER) },
                 onLoginSuccess = {
-                    val dest = if (currentUser?.role == Role.TEACHER) Screen.MAIN_TEACHER else Screen.MAIN_STUDENT
+                    val role = currentUser?.role
+                    val dest = when (role) {
+                        Role.ADMIN -> Screen.MAIN_ADMIN
+                        Role.TEACHER -> Screen.MAIN_TEACHER
+                        Role.STUDENT -> Screen.MAIN_STUDENT
+                        else -> Screen.MAIN_STUDENT
+                    }
                     navController.navigate(dest) {
                         popUpTo(Screen.LOGIN) { inclusive = true }
                     }
@@ -108,6 +114,48 @@ fun NavGraph(
                 onNavigateToNotifications = { navController.navigate(Screen.PROFILE_NOTIFICATIONS) },
                 onNavigateToSecurity = { navController.navigate(Screen.PROFILE_SECURITY) },
                 onNavigateToGuide = { navController.navigate(Screen.PROFILE_GUIDE) }
+            )
+        }
+
+        composable(Screen.MAIN_ADMIN) {
+            com.example.codechecker.ui.screens.admin.AdminDashboardScreen(
+                onNavigateToUserManagement = { navController.navigate(Screen.ADMIN_USER_MANAGEMENT) },
+                onNavigateToDataManagement = { navController.navigate(Screen.ADMIN_DATA_MANAGEMENT) },
+                onNavigateToSystemSettings = { navController.navigate(Screen.ADMIN_SYSTEM_SETTINGS) },
+                onNavigateToAuditLogs = { navController.navigate(Screen.ADMIN_AUDIT_LOGS) },
+                onNavigateToSecurity = { navController.navigate(Screen.ADMIN_SECURITY) },
+                onLogout = { navController.navigate(Screen.LOGIN) }
+            )
+        }
+
+        // Admin screens
+        composable(Screen.ADMIN_USER_MANAGEMENT) {
+            com.example.codechecker.ui.screens.admin.UserManagementScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ADMIN_DATA_MANAGEMENT) {
+            com.example.codechecker.ui.screens.admin.DataManagementScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ADMIN_SYSTEM_SETTINGS) {
+            com.example.codechecker.ui.screens.admin.SystemSettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ADMIN_AUDIT_LOGS) {
+            com.example.codechecker.ui.screens.admin.AuditLogsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ADMIN_SECURITY) {
+            com.example.codechecker.ui.screens.admin.SecurityScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

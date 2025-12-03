@@ -35,13 +35,17 @@ class UserSessionManager @Inject constructor(
         val displayName = preferences[PreferenceKeys.DISPLAY_NAME] ?: return@map null
         val role = preferences[PreferenceKeys.USER_ROLE] ?: return@map null
         val createdAt = preferences[PreferenceKeys.LOGIN_TIME] ?: 0L
+        val isActive = preferences[PreferenceKeys.USER_IS_ACTIVE] ?: true
+        val status = preferences[PreferenceKeys.USER_STATUS] ?: "ACTIVE"
 
         User(
             id = userId,
             username = username,
             displayName = displayName,
             role = Role.fromValue(role),
-            createdAt = createdAt
+            createdAt = createdAt,
+            isActive = isActive,
+            status = com.example.codechecker.domain.model.UserStatus.fromValue(status)
         )
     }
 
@@ -62,6 +66,8 @@ class UserSessionManager @Inject constructor(
             preferences[PreferenceKeys.DISPLAY_NAME] = user.displayName
             preferences[PreferenceKeys.USER_ROLE] = user.role.value
             preferences[PreferenceKeys.LOGIN_TIME] = System.currentTimeMillis()
+            preferences[PreferenceKeys.USER_IS_ACTIVE] = user.isActive
+            preferences[PreferenceKeys.USER_STATUS] = user.status.value
         }
     }
 

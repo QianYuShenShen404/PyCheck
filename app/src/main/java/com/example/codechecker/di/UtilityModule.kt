@@ -81,3 +81,10 @@ interface UtilityModuleEntryPoint {
     fun timeUtils(): TimeUtils
     fun validationUtils(): ValidationUtils
 }
+
+@dagger.hilt.EntryPoint
+@InstallIn(SingletonComponent::class)
+interface AppEntryPoint {
+    fun databaseValidationUseCase(): com.example.codechecker.domain.usecase.DatabaseValidationUseCase
+    fun ensureAdminExistsUseCase(): com.example.codechecker.domain.usecase.EnsureAdminExistsUseCase
+}

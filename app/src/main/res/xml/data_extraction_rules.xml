@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Include all files by default -->
+        <include domain="file" path="."/>
+        <include domain="database" path="."/>
+        <include domain="sharedpref" path="."/>
+
+        <!-- Exclude sensitive data -->
+        <exclude domain="sharedpref" path="user_session.xml"/>
+    </cloud-backup>
+
+    <device-transfer>
+        <!-- Include all files by default -->
+        <include domain="file" path="."/>
+        <include domain="database" path="."/>
+        <include domain="sharedpref" path="."/>
+
+        <!-- Exclude sensitive data -->
+        <exclude domain="sharedpref" path="user_session.xml"/>
+    </device-transfer>
+</data-extraction-rules>

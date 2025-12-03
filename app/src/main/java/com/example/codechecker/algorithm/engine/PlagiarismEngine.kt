@@ -4,6 +4,7 @@ import com.example.codechecker.domain.model.Submission
 import com.example.codechecker.domain.model.Similarity
 import com.example.codechecker.domain.model.HighlightData
 import com.example.codechecker.domain.model.MatchRegion
+import com.example.codechecker.algorithm.service.AlgorithmSettingsService
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,11 +12,13 @@ import javax.inject.Singleton
  * Plagiarism detection engine
  *
  * Compares all submissions pairwise and calculates similarity scores
+ * Uses configurable settings from admin configuration
  */
 @Singleton
 class PlagiarismEngine @Inject constructor(
     private val tokenizer: com.example.codechecker.algorithm.tokenizer.PythonTokenizer,
-    private val similarityCalculator: com.example.codechecker.algorithm.similarity.SimilarityCalculator
+    private val similarityCalculator: com.example.codechecker.algorithm.similarity.SimilarityCalculator,
+    private val algorithmSettingsService: AlgorithmSettingsService
 ) {
     data class PlagiarismProgress(
         val current: Int,
@@ -197,16 +200,27 @@ class PlagiarismEngine @Inject constructor(
 
     /**
      * Find high-similarity pairs (threshold-based filtering)
+     * Uses configurable threshold from admin settings
      */
     suspend fun findHighSimilarityPairs(
         submissions: List<Submission>,
-        threshold: Float = 60f,
+        threshold: Float? = null,
         progressCallback: ((PlagiarismProgress) -> Unit)? = null
     ): List<Similarity> {
+        // Use provided threshold or get from settings
+        val actualThreshold = threshold ?: algorithmSettingsService.getSimilarityThreshold()
+
         val allSimilarities = detectPlagiarism(submissions, progressCallback)
 
         // Filter by threshold
-        return allSimilarities.filter { it.similarityScore >= threshold }
+        return allSimilarities.filter { it.similarityScore >= actualThreshold }
             .sortedByDescending { it.similarityScore }
+    }
+
+    /**
+     * Check if similarity score is considered high based on admin settings
+     */
+    suspend fun isHighSimilarity(score: Float): Boolean {
+        return algorithmSettingsService.isHighSimilarity(score)
     }
 }

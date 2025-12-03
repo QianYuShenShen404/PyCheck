@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">pycheck</string>
+    <string name="login">登录</string>
+    <string name="register">注册</string>
+    <string name="username">用户名</string>
+    <string name="password">密码</string>
+    <string name="display_name">显示名称</string>
+    <string name="student">学生</string>
+    <string name="teacher">教师</string>
+    <string name="logout">退出登录</string>
+    <string name="assignments">作业列表</string>
+    <string name="create_assignment">创建作业</string>
+    <string name="submit_code">提交代码</string>
+    <string name="plagiarism_report">查重报告</string>
+    <string name="code_comparison">代码对比</string>
+</resources>

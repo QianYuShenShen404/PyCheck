@@ -39,7 +39,9 @@
       "Bash(if exist appbuild rmdir /s /q appbuild)",
       "Bash(if exist .gradle rmdir:*)",
       "Bash(if exist build rmdir /s /q build)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(openspec:*)",
+      "Bash(Select-Object:*)"
     ],
     "deny": [],
     "ask": []

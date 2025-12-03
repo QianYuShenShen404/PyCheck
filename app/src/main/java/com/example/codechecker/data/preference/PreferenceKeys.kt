@@ -35,4 +35,14 @@ object PreferenceKeys {
     val LOGIN_TIME: Preferences.Key<Long> = longPreferencesKey("login_time")
 
     val EMAIL: Preferences.Key<String> = stringPreferencesKey("email")
+
+    /**
+     * User is active status
+     */
+    val USER_IS_ACTIVE: Preferences.Key<Boolean> = androidx.datastore.preferences.core.booleanPreferencesKey("user_is_active")
+
+    /**
+     * User status (ACTIVE/DISABLED)
+     */
+    val USER_STATUS: Preferences.Key<String> = stringPreferencesKey("user_status")
 }

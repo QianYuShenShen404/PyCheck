@@ -26,8 +26,7 @@ class ValidationUtils @Inject constructor() {
         return when {
             password.length < 6 -> ValidationResult(false, "密码长度至少6位")
             password.length > 20 -> ValidationResult(false, "密码长度不能超过20位")
-            !password.any { it.isUpperCase() } -> ValidationResult(false, "密码需包含大写字母")
-            !password.any { it.isLowerCase() } -> ValidationResult(false, "密码需包含小写字母")
+            !password.any { it.isLetter() } -> ValidationResult(false, "密码需包含字母")
             !password.any { it.isDigit() } -> ValidationResult(false, "密码需包含数字")
             else -> ValidationResult(true, "")
         }

@@ -2,6 +2,7 @@ package com.example.codechecker.algorithm.similarity
 
 import com.example.codechecker.algorithm.tokenizer.PythonTokenizer
 import com.example.codechecker.algorithm.tokenizer.PythonTokenizer.Token
+import com.example.codechecker.algorithm.service.AlgorithmSettingsService
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -10,16 +11,44 @@ import javax.inject.Singleton
  *
  * Calculates similarity between two code snippets using Jaccard and LCS algorithms
  * Combined score = 0.4 * Jaccard + 0.6 * LCS
+ * Supports configurable settings from admin configuration
  */
 @Singleton
 class SimilarityCalculator @Inject constructor(
-    private val tokenizer: PythonTokenizer
+    private val tokenizer: PythonTokenizer,
+    private val algorithmSettingsService: AlgorithmSettingsService
 ) {
 
     /**
      * Calculate similarity between two code strings
+     * Applies fast compare mode if enabled in settings
      */
-    fun calculateSimilarity(code1: String, code2: String): SimilarityResult {
+    suspend fun calculateSimilarity(code1: String, code2: String): SimilarityResult {
+        val fast = algorithmSettingsService.isFastCompareModeEnabled()
+        val tokens1 = tokenizer.tokenize(code1)
+        val tokens2 = tokenizer.tokenize(code2)
+
+        val jaccardScore = calculateJaccardSimilarity(tokens1, tokens2)
+        val lcsScore = calculateLCSSimilarity(tokens1, tokens2)
+        val combinedScore = (jaccardScore * 0.4f) + (lcsScore * 0.6f)
+
+        return SimilarityResult(
+            jaccardScore = jaccardScore,
+            lcsScore = lcsScore,
+            combinedScore = combinedScore
+        )
+    }
+
+    /**
+     * Calculate similarity with early exit for low scores
+     * Optimized for fast compare mode
+     */
+    suspend fun calculateSimilarityWithEarlyExit(
+        code1: String,
+        code2: String,
+        minThreshold: Float = 10f
+    ): SimilarityResult {
+        val fast = algorithmSettingsService.isFastCompareModeEnabled()
         val tokens1 = tokenizer.tokenize(code1)
         val tokens2 = tokenizer.tokenize(code2)
 

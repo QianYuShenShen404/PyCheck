@@ -10,14 +10,18 @@ import androidx.room.PrimaryKey
 data class UserEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    
+
     val username: String,
-    
+
     val passwordHash: String,
-    
+
     val displayName: String,
-    
-    val role: String, // "STUDENT" or "TEACHER"
-    
-    val createdAt: Long
+
+    val role: String, // "STUDENT", "TEACHER", or "ADMIN"
+
+    val createdAt: Long,
+
+    val isActive: Boolean = true,
+
+    val status: String = "ACTIVE" // "ACTIVE" or "DISABLED"
 )

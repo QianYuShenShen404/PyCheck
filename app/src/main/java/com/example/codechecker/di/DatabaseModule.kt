@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.codechecker.data.local.database.AppDatabase
 import com.example.codechecker.data.local.database.DatabaseCallback
+import com.example.codechecker.data.local.database.MIGRATION_1_2
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,13 +24,17 @@ object DatabaseModule {
      */
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+        databaseCallback: DatabaseCallback
+    ): AppDatabase {
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
             "codechecker_database"
         )
-        .addCallback(DatabaseCallback())
+        .addCallback(databaseCallback)
+        .addMigrations(MIGRATION_1_2)
         .fallbackToDestructiveMigration()
         .build()
     }
@@ -57,5 +62,15 @@ object DatabaseModule {
     @Provides
     fun provideSimilarityDao(database: AppDatabase): com.example.codechecker.data.local.dao.SimilarityDao {
         return database.similarityDao()
+    }
+
+    @Provides
+    fun provideAdminAuditLogDao(database: AppDatabase): com.example.codechecker.data.local.dao.AdminAuditLogDao {
+        return database.adminAuditLogDao()
+    }
+
+    @Provides
+    fun provideAdminSettingDao(database: AppDatabase): com.example.codechecker.data.local.dao.AdminSettingDao {
+        return database.adminSettingDao()
     }
 }

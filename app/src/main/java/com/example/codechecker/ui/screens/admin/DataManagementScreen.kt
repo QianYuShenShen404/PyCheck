@@ -1,0 +1,710 @@
+package com.example.codechecker.ui.screens.admin
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.codechecker.ui.screens.admin.viewmodel.DataManagementViewModel
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
+
+/**
+ * Data Management Screen
+ * Provides database backup, restore, export, import, and cleanup functionality
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DataManagementScreen(
+    onNavigateBack: () -> Unit,
+    viewModel: DataManagementViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+
+    var showBackupDialog by remember { mutableStateOf(false) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
+    var showCleanupDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("数据管理") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.refreshStats() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "刷新")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Success Message
+            val successMsg = uiState.success
+            if (successMsg != null) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = successMsg,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(onClick = { viewModel.clearSuccess() }) {
+                            Text("关闭")
+                        }
+                    }
+                }
+            }
+
+            // Error Message
+            val errorMsg = uiState.error
+            if (errorMsg != null) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Error,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = errorMsg,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(onClick = { viewModel.clearError() }) {
+                            Text("关闭")
+                        }
+                    }
+                }
+            }
+
+            // Storage Statistics
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "存储统计",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem(
+                            icon = Icons.Default.Person,
+                            label = "用户数",
+                            value = uiState.storageStats.totalUsers.toString()
+                        )
+                        StatItem(
+                            icon = Icons.Default.History,
+                            label = "审计日志",
+                            value = uiState.storageStats.totalAuditLogs.toString()
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                    val lastUpdated = format.format(Date())
+                    Text(
+                        text = "最后更新: $lastUpdated",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Database Operations
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "数据库操作",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { showBackupDialog = true },
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isBackupInProgress && !uiState.isRestoreInProgress
+                        ) {
+                            Icon(Icons.Default.Backup, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("备份")
+                        }
+                        OutlinedButton(
+                            onClick = { showRestoreDialog = true },
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isBackupInProgress && !uiState.isRestoreInProgress
+                        ) {
+                            Icon(Icons.Default.Restore, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("恢复")
+                        }
+                    }
+
+                    if (uiState.isBackupInProgress || uiState.isRestoreInProgress) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (uiState.isBackupInProgress) "正在备份..." else "正在恢复...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Data Transfer
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "数据传输",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = { showExportDialog = true },
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isExportInProgress && !uiState.isImportInProgress
+                        ) {
+                            Icon(Icons.Default.FileDownload, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("导出数据")
+                        }
+                        OutlinedButton(
+                            onClick = { showImportDialog = true },
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isExportInProgress && !uiState.isImportInProgress
+                        ) {
+                            Icon(Icons.Default.FileUpload, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("导入数据")
+                        }
+                    }
+
+                    if (uiState.isExportInProgress || uiState.isImportInProgress) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (uiState.isExportInProgress) "正在导出..." else "正在导入...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Data Cleanup
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "数据清理",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Icon(
+                            Icons.Default.CleaningServices,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "清理旧数据以释放存储空间",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.previewCleanup(90)
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isCleanupInProgress
+                        ) {
+                            Icon(Icons.Default.Preview, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("预览清理")
+                        }
+                        Button(
+                            onClick = { showCleanupDialog = true },
+                            modifier = Modifier.weight(1f),
+                            enabled = !uiState.isCleanupInProgress
+                        ) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("开始清理")
+                        }
+                    }
+
+                    if (uiState.isCleanupInProgress) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "正在清理数据...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (uiState.cleanupPreview != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "清理预览",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    TextButton(onClick = { viewModel.clearPreview() }) {
+                                        Text("清除")
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                val preview = uiState.cleanupPreview
+                                Text(
+                                    text = "将删除约 ${preview?.reportsToDelete ?: 0} 个报告",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = "将删除约 ${preview?.submissionsToDelete ?: 0} 个提交",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = "将删除约 ${preview?.auditLogsToDelete ?: 0} 个审计日志",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                val freed = preview?.estimatedSpaceFreed ?: 0
+                                if (freed > 0) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "预计释放空间: ${freed / 1024 / 1024} MB",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Backup Dialog
+    if (showBackupDialog) {
+        AlertDialog(
+            onDismissRequest = { showBackupDialog = false },
+            title = { Text("数据库备份") },
+            text = {
+                Column {
+                    Text(
+                        text = "您确定要创建数据库备份吗？",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "备份将保存到应用私有存储目录",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.backupDatabase()
+                        showBackupDialog = false
+                    }
+                ) {
+                    Text("确认备份")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBackupDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // Restore Dialog
+    if (showRestoreDialog) {
+        var backupPath by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showRestoreDialog = false },
+            title = { Text("数据库恢复") },
+            text = {
+                Column {
+                    Text(
+                        text = "警告：此操作将覆盖当前数据库！",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = backupPath,
+                        onValueChange = { backupPath = it },
+                        label = { Text("备份文件路径") },
+                        placeholder = { Text("输入备份文件路径") },
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "请确保文件存在且为有效备份",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (backupPath.isNotBlank()) {
+                            viewModel.restoreDatabase(backupPath)
+                            showRestoreDialog = false
+                        }
+                    },
+                    enabled = backupPath.isNotBlank()
+                ) {
+                    Text("确认恢复")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // Export Dialog
+    if (showExportDialog) {
+        var selectedFormat by remember { mutableStateOf("JSON") }
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            title = { Text("数据导出") },
+            text = {
+                Column {
+                    Text(
+                        text = "选择导出格式",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("JSON", "CSV", "XML").forEach { format ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = selectedFormat == format,
+                                    onClick = { selectedFormat = format }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(format)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "导出将创建包含所有用户和审计日志的文件",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.exportData(selectedFormat)
+                        showExportDialog = false
+                    }
+                ) {
+                    Text("开始导出")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExportDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // Import Dialog
+    if (showImportDialog) {
+        var selectedFormat by remember { mutableStateOf("JSON") }
+        AlertDialog(
+            onDismissRequest = { showImportDialog = false },
+            title = { Text("数据导入") },
+            text = {
+                Column {
+                    Text(
+                        text = "警告：导入将合并数据，不会覆盖现有数据",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "选择导入格式",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("JSON", "CSV", "XML").forEach { format ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = selectedFormat == format,
+                                    onClick = { selectedFormat = format }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(format)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.importData(selectedFormat)
+                        showImportDialog = false
+                    }
+                ) {
+                    Text("开始导入")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // Cleanup Dialog
+    if (showCleanupDialog) {
+        var cleanupLogs by remember { mutableStateOf(true) }
+        var cleanupOldUsers by remember { mutableStateOf(true) }
+        var daysToKeep by remember { mutableStateOf("90") }
+
+        AlertDialog(
+            onDismissRequest = { showCleanupDialog = false },
+            title = { Text("数据清理") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(
+                        text = "选择要清理的数据类型",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = cleanupLogs,
+                                onCheckedChange = { cleanupLogs = it }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("清理审计日志")
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = cleanupOldUsers,
+                                onCheckedChange = { cleanupOldUsers = it }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("清理非活跃用户")
+                        }
+                    }
+                    OutlinedTextField(
+                        value = daysToKeep,
+                        onValueChange = { daysToKeep = it.filter { char -> char.isDigit() }.take(3) },
+                        label = { Text("保留天数") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
+                    )
+                    Text(
+                        text = "将删除早于指定天数的数据",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val days = daysToKeep.toIntOrNull() ?: 90
+                        viewModel.cleanupData(cleanupLogs, cleanupOldUsers, days)
+                        showCleanupDialog = false
+                    }
+                ) {
+                    Text("确认清理")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCleanupDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun StatItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(8.dp)
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}

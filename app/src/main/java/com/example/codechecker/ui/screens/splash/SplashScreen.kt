@@ -39,7 +39,11 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         val user = session.getCurrentUser()
         val dest = if (user != null) {
-            if (user.role == Role.TEACHER) Screen.MAIN_TEACHER else Screen.MAIN_STUDENT
+            when (user.role) {
+                Role.ADMIN -> Screen.MAIN_ADMIN
+                Role.TEACHER -> Screen.MAIN_TEACHER
+                else -> Screen.MAIN_STUDENT
+            }
         } else {
             Screen.LOGIN
         }

@@ -8,7 +8,9 @@ data class User(
     val username: String,
     val displayName: String,
     val role: Role,
-    val createdAt: Long
+    val createdAt: Long,
+    val isActive: Boolean = true,
+    val status: UserStatus = UserStatus.ACTIVE
 )
 
 /**
@@ -16,12 +18,28 @@ data class User(
  */
 enum class Role(val value: String) {
     STUDENT("STUDENT"),
-    TEACHER("TEACHER");
+    TEACHER("TEACHER"),
+    ADMIN("ADMIN");
 
     companion object {
         fun fromValue(value: String): Role {
             val normalized = value.uppercase()
             return values().find { it.value == normalized } ?: STUDENT
+        }
+    }
+}
+
+/**
+ * User status enum
+ */
+enum class UserStatus(val value: String) {
+    ACTIVE("ACTIVE"),
+    DISABLED("DISABLED");
+
+    companion object {
+        fun fromValue(value: String): UserStatus {
+            val normalized = value.uppercase()
+            return values().find { it.value == normalized } ?: ACTIVE
         }
     }
 }

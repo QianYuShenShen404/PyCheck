@@ -1,6 +1,8 @@
 package com.example.codechecker.di
 
+import com.example.codechecker.domain.repository.AdminSettingsRepository
 import com.example.codechecker.domain.repository.AssignmentRepository
+import com.example.codechecker.data.repository.AdminSettingsRepositoryImpl
 import com.example.codechecker.data.repository.AssignmentRepositoryImpl
 import com.example.codechecker.domain.repository.ReportRepository
 import com.example.codechecker.data.repository.ReportRepositoryImpl
@@ -56,4 +58,13 @@ abstract class RepositoryModule {
     abstract fun bindReportRepository(
         reportRepositoryImpl: ReportRepositoryImpl
     ): ReportRepository
+
+    /**
+     * Binds AdminSettingsRepository implementation
+     */
+    @Binds
+    @Singleton
+    abstract fun bindAdminSettingsRepository(
+        adminSettingsRepositoryImpl: AdminSettingsRepositoryImpl
+    ): AdminSettingsRepository
 }

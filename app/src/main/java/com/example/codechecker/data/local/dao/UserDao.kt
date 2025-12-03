@@ -51,4 +51,76 @@ interface UserDao {
      */
     @Query("SELECT * FROM users")
     suspend fun getAllUsers(): List<UserEntity>
+
+    /**
+     * Get all active users
+     */
+    @Query("SELECT * FROM users WHERE isActive = 1")
+    suspend fun getAllActiveUsers(): List<UserEntity>
+
+    /**
+     * Get users by role
+     */
+    @Query("SELECT * FROM users WHERE role = :role")
+    suspend fun getUsersByRole(role: String): List<UserEntity>
+
+    /**
+     * Get users by status
+     */
+    @Query("SELECT * FROM users WHERE status = :status")
+    suspend fun getUsersByStatus(status: String): List<UserEntity>
+
+    /**
+     * Update user status
+     */
+    @Query("UPDATE users SET status = :status WHERE id = :userId")
+    suspend fun updateUserStatus(userId: Long, status: String)
+
+    /**
+     * Update user active flag
+     */
+    @Query("UPDATE users SET isActive = :isActive WHERE id = :userId")
+    suspend fun updateUserActiveFlag(userId: Long, isActive: Boolean)
+
+    /**
+     * Update user role
+     */
+    @Query("UPDATE users SET role = :role WHERE id = :userId")
+    suspend fun updateUserRole(userId: Long, role: String)
+
+    /**
+     * Update user password hash
+     */
+    @Query("UPDATE users SET passwordHash = :passwordHash WHERE id = :userId")
+    suspend fun updateUserPasswordHash(userId: Long, passwordHash: String)
+
+    /**
+     * Get user count
+     */
+    @Query("SELECT COUNT(*) FROM users")
+    suspend fun getUserCount(): Int
+
+    /**
+     * Get active user count
+     */
+    @Query("SELECT COUNT(*) FROM users WHERE isActive = 1")
+    suspend fun getActiveUserCount(): Int
+
+    /**
+     * Get user count by role
+     */
+    @Query("SELECT COUNT(*) FROM users WHERE role = :role")
+    suspend fun getUserCountByRole(role: String): Int
+
+    /**
+     * Search users by username or display name
+     */
+    @Query("SELECT * FROM users WHERE username LIKE '%' || :query || '%' OR displayName LIKE '%' || :query || '%'")
+    suspend fun searchUsers(query: String): List<UserEntity>
+
+    /**
+     * Get users with pagination
+     */
+    @Query("SELECT * FROM users ORDER BY createdAt DESC LIMIT :limit OFFSET :offset")
+    suspend fun getUsersPaged(limit: Int, offset: Int): List<UserEntity>
 }

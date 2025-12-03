@@ -28,6 +28,6 @@ interface SimilarityDao {
     @Query("SELECT * FROM similarity_pairs WHERE report_id = :reportId AND similarity_score >= :threshold ORDER BY similarity_score DESC")
     fun getHighSimilaritiesFlow(
         reportId: Long,
-        threshold: Float = 60f
+        threshold: Float
     ): Flow<List<SimilarityEntity>>
 }

@@ -75,8 +75,8 @@ fun RegisterScreen(
         var isValid = true
 
         usernameError = when {
-            username.isEmpty() -> "用户名不能为空"
-            !validationUtils.isValidUsername(username) -> "用户名必须为3-20位字母数字下划线"
+            username.isEmpty() -> "工号/学号不能为空"
+            !validationUtils.isValidUsername(username) -> "工号/学号必须为3-20位字母数字下划线"
             else -> null
         }.also { isValid = isValid && it == null }
 
@@ -144,12 +144,12 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Username field
+            // Staff/Student ID field
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("用户名") },
-                placeholder = { Text("请输入用户名") },
+                label = { Text("工号/学号") },
+                placeholder = { Text("请输入工号/学号") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Ascii,

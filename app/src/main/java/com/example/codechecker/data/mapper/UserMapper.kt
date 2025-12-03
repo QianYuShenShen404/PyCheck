@@ -3,6 +3,7 @@ package com.example.codechecker.data.mapper
 import com.example.codechecker.data.local.entity.UserEntity
 import com.example.codechecker.domain.model.Role
 import com.example.codechecker.domain.model.User
+import com.example.codechecker.domain.model.UserStatus
 
 /**
  * Mapper for User entity and domain model
@@ -18,21 +19,25 @@ object UserMapper {
             username = entity.username,
             displayName = entity.displayName,
             role = Role.fromValue(entity.role),
-            createdAt = entity.createdAt
+            createdAt = entity.createdAt,
+            isActive = entity.isActive,
+            status = UserStatus.fromValue(entity.status)
         )
     }
 
     /**
      * Convert domain model to entity
      */
-    fun toEntity(domain: User): UserEntity {
+    fun toEntity(domain: User, passwordHash: String = ""): UserEntity {
         return UserEntity(
             id = domain.id,
             username = domain.username,
-            passwordHash = "", // Should be set separately
+            passwordHash = passwordHash,
             displayName = domain.displayName,
             role = domain.role.value,
-            createdAt = domain.createdAt
+            createdAt = domain.createdAt,
+            isActive = domain.isActive,
+            status = domain.status.value
         )
     }
 
